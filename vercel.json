@@ -1,7 +1,14 @@
 {
+  "version": 2,
+  "builds": [
+    {
+      "src": "/slack-interactive-app/api/server.js",
+      "use": "@vercel/node"
+    }
+  ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/slack/actions",
       "dest": "/slack-interactive-app/api/server.js"
     }
   ]
