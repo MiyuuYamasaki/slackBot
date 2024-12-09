@@ -18,36 +18,28 @@ app.use(bodyParser.json());
 // ボタンが押されたときの処理
 app.post('/slack/actions', async (req, res) => {
   try {
-    // ペイロードをJSONとしてパース
-    const payload = JSON.parse(req.body.payload);
-
-    // アクションの情報を取得
+    const payload = req.body;
     const action = payload.actions[0].action_id;
-    const userName = payload.user.username; // Slackユーザー名
-    const channelId = payload.channel.id; // チャンネルID
-    const messageTs = payload.message.ts; // スレッドのタイムスタンプ
+    const userName = payload.user.name;
 
     let responseText = '';
 
-    // アクションIDによる処理の分岐
     if (action === 'button_office') {
       responseText = `${userName} さんが本社勤務を選択しました。`;
     } else if (action === 'button_remote') {
       responseText = `${userName} さんが在宅勤務を選択しました。`;
     }
 
-    // Slackにスレッド返信を送信
     await client.chat.postMessage({
-      channel: channelId,
-      thread_ts: messageTs,
+      channel: payload.channel.id,
+      thread_ts: payload.message.ts, // スレッドのタイムスタンプ
       text: responseText,
     });
 
-    // Slackに成功レスポンスを返す
     res.status(200).send();
   } catch (error) {
-    console.error('エラー:', error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error posting message to Slack:', error);
+    res.status(500).send(`Internal Server Error: ${error.message}`);
   }
 });
 
