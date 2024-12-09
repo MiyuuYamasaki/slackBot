@@ -8,7 +8,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/server.js"
+      "dest": "/slack-interactive-app/api/server.js"
     }
   ]
 }
