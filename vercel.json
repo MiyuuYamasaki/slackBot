@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "slack-bot-actions/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/slack/actions",
+      "dest": "slack-bot-actions/server.js"
+    }
+  ]
+}
