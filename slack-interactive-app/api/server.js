@@ -18,25 +18,41 @@ app.use(bodyParser.json());
 // ボタンが押されたときの処理
 app.post('/slack/actions', async (req, res) => {
   try {
-    const payload = req.body;
-    const action = payload.actions[0].action_id;
-    const userName = payload.user.name;
+    // Slackのペイロードをパース
+    const payload = JSON.parse(req.body.payload);
+
+    // actionsやuserが存在するか確認
+    if (!payload.actions || !payload.user) {
+      console.error('Invalid payload structure:', payload);
+      res.status(400).send('Bad Request: Invalid payload structure');
+      return;
+    }
+
+    const action = payload.actions[0]?.action_id;
+    const userName = payload.user?.name;
 
     let responseText = '';
 
+    // 押されたボタンによって異なるレスポンスを設定
     if (action === 'button_office') {
       responseText = `${userName} さんが本社勤務を選択しました。`;
     } else if (action === 'button_remote') {
       responseText = `${userName} さんが在宅勤務を選択しました。`;
+    } else {
+      console.error('Unknown action_id:', action);
+      res.status(400).send('Bad Request: Unknown action_id');
+      return;
     }
 
+    // Slackのスレッドにメッセージを送信
     await client.chat.postMessage({
       channel: payload.channel.id,
       thread_ts: payload.message.ts, // スレッドのタイムスタンプ
       text: responseText,
     });
 
-    res.status(200).send();
+    // 成功レスポンス
+    res.status(200).send('Action received!');
   } catch (error) {
     console.error('Error posting message to Slack:', error);
     res.status(500).send(`Internal Server Error: ${error.message}`);
