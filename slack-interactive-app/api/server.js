@@ -38,37 +38,41 @@ app.post('/slack/actions', async (req, res) => {
 
     if (action === 'button_list') {
       // クエリを実行してデータを取得
-      const { data: records, error: queryError } = await supabase
-        .rpc('custom_query', {
+      const { data: records, error: queryError } = await supabase.rpc(
+        'custom_query',
+        {
           ymd_param: ymd, // SQLに渡す日付パラメータ
-        });
+        }
+      );
 
       if (queryError) throw queryError;
 
       // データを分類
-      const officeUsers = records
-        .filter((record) => record.workStyle === 'office')
-        .map((record) => `<@${record.user_id}>`)
-        .join('\n') || 'なし';
+      const officeUsers =
+        records
+          .filter((record) => record.workStyle === 'office')
+          .map((record) => `<@${record.user_id}>`)
+          .join('\n') || 'なし';
 
-      const remoteUsers = records
-        .filter((record) => record.workStyle === 'remote')
-        .map((record) => `<@${record.user_id}>`)
-        .join('\n') || 'なし';
+      const remoteUsers =
+        records
+          .filter((record) => record.workStyle === 'remote')
+          .map((record) => `<@${record.user_id}>`)
+          .join('\n') || 'なし';
 
-      const vacationUsers = records
-        .filter((record) => record.workStyle === null)
-        .map((record) => `<@${record.user_id}>`)
-        .join('\n') || 'なし';
+      const vacationUsers =
+        records
+          .filter((record) => record.workStyle === null)
+          .map((record) => `<@${record.user_id}>`)
+          .join('\n') || 'なし';
 
       // メッセージを構築
       const message = `📋 *${ymdMatch} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${vacationUsers}`;
-        await client.chat.postEphemeral({
-          channel: payload.channel.id,
-          user: payload.user.id,
-          text: message,
-        });
-      }
+      await client.chat.postEphemeral({
+        channel: payload.channel.id,
+        user: payload.user.id,
+        text: message,
+      });
     }
 
     if (action === 'button_office' || action === 'button_remote') {
