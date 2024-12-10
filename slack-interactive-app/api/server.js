@@ -41,7 +41,7 @@ app.post('/slack/actions', async (req, res) => {
       const { data: records, error: queryError } = await supabase.rpc(
         'custom_query',
         {
-          ymd_param: ymd, // SQLに渡す日付パラメータ
+          ymd: ymd, // SQLに渡す日付パラメータ
         }
       );
 
