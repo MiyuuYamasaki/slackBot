@@ -28,7 +28,7 @@ app.post('/slack/actions', async (req, res) => {
 
     // ボタンが押されたメッセージのtextを取得
     const messageText = payload.message.text;
-    const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/); // 日付（例: 2024/12/10）を抽出;
+    const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
 
     if (!ymdMatch) {
       throw new Error('Date not found in the message text');
@@ -37,37 +37,32 @@ app.post('/slack/actions', async (req, res) => {
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
 
     if (action === 'button_list') {
-      // 一覧ボタンを押したときの処理
-      const { data: records, error: fetchError } = await supabase
-        .from('Record')
-        .select('user_id, workStyle')
-        .eq('ymd', ymd);
-
-      if (fetchError) throw fetchError;
-
-      if (!records || records.length === 0) {
-        // データがない場合の処理
-        await client.chat.postEphemeral({
-          channel: payload.channel.id,
-          user: payload.user.id,
-          text: `まだデータがありません (${ymd})`,
+      // クエリを実行してデータを取得
+      const { data: records, error: queryError } = await supabase
+        .rpc('custom_query', {
+          ymd_param: ymd, // SQLに渡す日付パラメータ
         });
-      } else {
-        // データがある場合の処理
-        const officeUsers =
-          records
-            .filter((record) => record.workStyle === 'office')
-            .map((record) => `<@${record.user_id}>`)
-            .join('\n') || 'なし';
 
-        const remoteUsers =
-          records
-            .filter((record) => record.workStyle === 'remote')
-            .map((record) => `<@${record.user_id}>`)
-            .join('\n') || 'なし';
+      if (queryError) throw queryError;
 
-        const message = `📋 *${ymd} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${remoteUsers}`;
+      // データを分類
+      const officeUsers = records
+        .filter((record) => record.workStyle === 'office')
+        .map((record) => `<@${record.user_id}>`)
+        .join('\n') || 'なし';
 
+      const remoteUsers = records
+        .filter((record) => record.workStyle === 'remote')
+        .map((record) => `<@${record.user_id}>`)
+        .join('\n') || 'なし';
+
+      const vacationUsers = records
+        .filter((record) => record.workStyle === null)
+        .map((record) => `<@${record.user_id}>`)
+        .join('\n') || 'なし';
+
+      // メッセージを構築
+      const message = `📋 *${ymdMatch} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${vacationUsers}`;
         await client.chat.postEphemeral({
           channel: payload.channel.id,
           user: payload.user.id,
