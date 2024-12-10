@@ -43,75 +43,77 @@ app.post('/slack/actions', async (req, res) => {
       throw fetchError;
     }
 
-    if (existingRecord) {
-      // 既存のレコードがある場合、キャンセルか変更
-      if (existingRecord.workStyle === workStyle) {
-        // 同じボタンを押した場合 -> キャンセル
-        await supabase
-          .from('Record')
-          .update({ work_mode: null })
-          .eq('id', existingRecord.id);
-        workStyle = null;
-      } else {
-        // 別のボタンを押した場合 -> 更新
-        await supabase
-          .from('Record')
-          .update({ workStyle })
-          .eq('id', existingRecord.id);
-      }
-    } else {
-      // 初回選択時 -> 新規作成
-      await supabase
-        .from('Record')
-        .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
-    }
+    console.log(existingRecord);
 
-    // 現在の人数を集計
-    const { data: countData, error: countError } = await supabase
-      .from('Record')
-      .select('workStyle, count(*)')
-      .eq('ymd', ymd)
-      .groupBy('workStyle'); // 'groupBy'を使用
+    // if (existingRecord) {
+    //   // 既存のレコードがある場合、キャンセルか変更
+    //   if (existingRecord.workStyle === workStyle) {
+    //     // 同じボタンを押した場合 -> キャンセル
+    //     await supabase
+    //       .from('Record')
+    //       .update({ work_mode: null })
+    //       .eq('id', existingRecord.id);
+    //     workStyle = null;
+    //   } else {
+    //     // 別のボタンを押した場合 -> 更新
+    //     await supabase
+    //       .from('Record')
+    //       .update({ workStyle })
+    //       .eq('id', existingRecord.id);
+    //   }
+    // } else {
+    //   // 初回選択時 -> 新規作成
+    //   await supabase
+    //     .from('Record')
+    //     .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
+    // }
 
-    if (countError) throw countError;
+    // // 現在の人数を集計
+    // const { data: countData, error: countError } = await supabase
+    //   .from('Record')
+    //   .select('workStyle, count(*)')
+    //   .eq('ymd', ymd)
+    //   .groupBy('workStyle'); // 'groupBy'を使用
 
-    // 各勤務場所の人数を取得
-    const officeCount =
-      countData.find((d) => d.workStyle === 'office')?.count || 0;
-    const remoteCount =
-      countData.find((d) => d.workStyle === 'remote')?.count || 0;
+    // if (countError) throw countError;
 
-    // ボタンの状態を更新
-    await client.chat.update({
-      channel: payload.channel.id,
-      ts: payload.message.ts,
-      text: '勤務場所を選択してください:',
-      blocks: [
-        {
-          type: 'actions',
-          elements: [
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: `本社勤務 (${officeCount})`,
-              },
-              action_id: 'button_office',
-              style: workStyle === 'office' ? 'primary' : undefined,
-            },
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: `在宅勤務 (${remoteCount})`,
-              },
-              action_id: 'button_remote',
-              style: workStyle === 'remote' ? 'primary' : undefined,
-            },
-          ],
-        },
-      ],
-    });
+    // // 各勤務場所の人数を取得
+    // const officeCount =
+    //   countData.find((d) => d.workStyle === 'office')?.count || 0;
+    // const remoteCount =
+    //   countData.find((d) => d.workStyle === 'remote')?.count || 0;
+
+    // // ボタンの状態を更新
+    // await client.chat.update({
+    //   channel: payload.channel.id,
+    //   ts: payload.message.ts,
+    //   text: '勤務場所を選択してください:',
+    //   blocks: [
+    //     {
+    //       type: 'actions',
+    //       elements: [
+    //         {
+    //           type: 'button',
+    //           text: {
+    //             type: 'plain_text',
+    //             text: `本社勤務 (${officeCount})`,
+    //           },
+    //           action_id: 'button_office',
+    //           style: workStyle === 'office' ? 'primary' : undefined,
+    //         },
+    //         {
+    //           type: 'button',
+    //           text: {
+    //             type: 'plain_text',
+    //             text: `在宅勤務 (${remoteCount})`,
+    //           },
+    //           action_id: 'button_remote',
+    //           style: workStyle === 'remote' ? 'primary' : undefined,
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // });
 
     res.status(200).send();
   } catch (error) {
