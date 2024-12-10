@@ -8,11 +8,11 @@ const bodyParser = require('body-parser');
 // 環境変数の設定
 const SLACK_TOKEN = process.env.SLACK_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 // クライアントの初期化
 const client = new WebClient(SLACK_TOKEN);
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Expressサーバーのセットアップ
 const app = express();
