@@ -63,7 +63,7 @@ app.post('/slack/actions', async (req, res) => {
       // 初回選択時 -> 新規作成
       await supabase
         .from('Record')
-        .insert([{ ymd, user_id: userId, workStyle: workMode }]);
+        .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
     }
 
     // 現在の人数を集計
@@ -97,7 +97,7 @@ app.post('/slack/actions', async (req, res) => {
                 text: `本社勤務 (${officeCount})`,
               },
               action_id: 'button_office',
-              style: workMode === 'office' ? 'primary' : undefined,
+              style: workStyle === 'office' ? 'primary' : undefined,
             },
             {
               type: 'button',
@@ -106,7 +106,7 @@ app.post('/slack/actions', async (req, res) => {
                 text: `在宅勤務 (${remoteCount})`,
               },
               action_id: 'button_remote',
-              style: workMode === 'remote' ? 'primary' : undefined,
+              style: workStyle === 'remote' ? 'primary' : undefined,
             },
           ],
         },
