@@ -70,27 +70,29 @@ app.post('/slack/actions', async (req, res) => {
     }
 
     // 現在の人数を集計
-    const { data: countData, error: countError } = await supabase
-      // .from('Record')
-      // .select('workStyle', { count: '*' })
-      // .eq('ymd', ymd)
-      // .groupBy('"workStyle"'); // 'groupBy'を使用
+    const {
+      data: countData,
+      error: countError,
+      count,
+    } = await supabase
       .from('Record')
       .select('workStyle', { count: 'exact' })
-      .match({ ymd: ymd });
+      .eq('ymd', ymd);
 
     if (countError) throw countError;
 
-    console.log('countData:' + countData);
+    console.log('countData:', countData);
 
-    // 各勤務場所の人数を取得
-    const officeCount =
-      countData.find((d) => d.workStyle === 'office')?.count || 0;
-    const remoteCount =
-      countData.find((d) => d.workStyle === 'remote')?.count || 0;
+    // 各勤務場所の人数を集計
+    const officeCount = countData.filter(
+      (d) => d.workStyle === 'office'
+    ).length;
+    const remoteCount = countData.filter(
+      (d) => d.workStyle === 'remote'
+    ).length;
 
-    console.log('officeCount:' + officeCount);
-    console.log('remoteCount:' + remoteCount);
+    console.log('officeCount:', officeCount);
+    console.log('remoteCount:', remoteCount);
 
     // // ボタンの状態を更新
     // await client.chat.update({
