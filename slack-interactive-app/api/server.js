@@ -27,9 +27,9 @@ app.post('/slack/actions', async (req, res) => {
     const userId = payload.user?.name;
     const ymd = new Date().toISOString().split('T')[0]; // 今日の日付
 
-    let workMode = null;
-    if (action === 'button_office') workMode = 'office';
-    if (action === 'button_remote') workMode = 'remote';
+    let workStyle = null;
+    if (action === 'button_office') workStyle = 'office';
+    if (action === 'button_remote') workStyle = 'remote';
 
     // Supabaseにデータを保存/更新
     const { data: existingRecord, error: fetchError } = await supabase
@@ -45,41 +45,41 @@ app.post('/slack/actions', async (req, res) => {
 
     if (existingRecord) {
       // 既存のレコードがある場合、キャンセルか変更
-      if (existingRecord.work_mode === workMode) {
+      if (existingRecord.workStyle === workStyle) {
         // 同じボタンを押した場合 -> キャンセル
         await supabase
           .from('Record')
           .update({ work_mode: null })
           .eq('id', existingRecord.id);
-        workMode = null;
+        workStyle = null;
       } else {
         // 別のボタンを押した場合 -> 更新
         await supabase
           .from('Record')
-          .update({ work_mode })
+          .update({ workStyle })
           .eq('id', existingRecord.id);
       }
     } else {
       // 初回選択時 -> 新規作成
       await supabase
         .from('Record')
-        .insert([{ ymd, user_id: userId, work_mode: workMode }]);
+        .insert([{ ymd, user_id: userId, workStyle: workMode }]);
     }
 
     // 現在の人数を集計
     const { data: countData, error: countError } = await supabase
       .from('Record')
-      .select('work_mode, count(*)')
+      .select('workStyle, count(*)')
       .eq('ymd', ymd)
-      .groupBy('work_mode'); // 'groupBy'を使用
+      .groupBy('workStyle'); // 'groupBy'を使用
 
     if (countError) throw countError;
 
     // 各勤務場所の人数を取得
     const officeCount =
-      countData.find((d) => d.work_mode === 'office')?.count || 0;
+      countData.find((d) => d.workStyle === 'office')?.count || 0;
     const remoteCount =
-      countData.find((d) => d.work_mode === 'remote')?.count || 0;
+      countData.find((d) => d.workStyle === 'remote')?.count || 0;
 
     // ボタンの状態を更新
     await client.chat.update({
