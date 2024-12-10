@@ -28,131 +28,170 @@ app.post('/slack/actions', async (req, res) => {
 
     // ボタンが押されたメッセージのtextを取得
     const messageText = payload.message.text;
-    const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/); // 日付（例: 2024/12/10）を抽出
-
-    console.log(messageText);
+    const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/); // 日付（例: 2024/12/10）を抽出;
 
     if (!ymdMatch) {
       throw new Error('Date not found in the message text');
     }
 
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
-    console.log('Extracted YMD:', ymd);
 
-    let workStyle = null;
-    if (action === 'button_office') workStyle = 'office';
-    if (action === 'button_remote') workStyle = 'remote';
-
-    // Supabaseにデータを保存/更新
-    const { data: existingRecord, error: fetchError } = await supabase
-      .from('Record')
-      .select('*')
-      .eq('ymd', ymd)
-      .eq('user_id', userId)
-      .single();
-
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw fetchError;
-    }
-
-    if (!existingRecord) {
-      // レコードが存在しない場合はINSERT
-      const { error: insertError } = await supabase
+    if (action === 'button_list') {
+      // 一覧ボタンを押したときの処理
+      const { data: records, error: fetchError } = await supabase
         .from('Record')
-        .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
+        .select('user_id, workStyle')
+        .eq('ymd', ymd);
 
-      if (insertError) throw insertError;
-      console.log('Inserted new record for', userId);
-    } else {
-      // 既存のレコードがあり、workStyleが異なる場合はUPDATE
-      if (existingRecord.workStyle !== workStyle) {
-        const { error: updateError } = await supabase
-          .from('Record')
-          .update({ workStyle: workStyle })
-          .eq('id', existingRecord.id);
+      if (fetchError) throw fetchError;
 
-        if (updateError) throw updateError;
-        console.log('Updated record for', userId);
+      if (!records || records.length === 0) {
+        // データがない場合の処理
+        await client.chat.postEphemeral({
+          channel: payload.channel.id,
+          user: payload.user.id,
+          text: `まだデータがありません (${ymd})`,
+        });
       } else {
-        // 同じworkStyleの場合は変更なし
-        console.log('No change needed, already selected', workStyle);
+        // データがある場合の処理
+        const officeUsers =
+          records
+            .filter((record) => record.workStyle === 'office')
+            .map((record) => `<@${record.user_id}>`)
+            .join('\n') || 'なし';
+
+        const remoteUsers =
+          records
+            .filter((record) => record.workStyle === 'remote')
+            .map((record) => `<@${record.user_id}>`)
+            .join('\n') || 'なし';
+
+        const message = `📋 *${ymd} の勤務場所一覧:*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}`;
+
+        await client.chat.postEphemeral({
+          channel: payload.channel.id,
+          user: payload.user.id,
+          text: message,
+        });
       }
     }
 
-    // 現在の人数を集計
-    const {
-      data: countData,
-      error: countError,
-      count,
-    } = await supabase
-      .from('Record')
-      .select('workStyle', { count: 'exact' })
-      .eq('ymd', ymd);
+    if (action === 'button_office' || action === 'button_remote') {
+      let workStyle = null;
+      if (action === 'button_office') workStyle = 'office';
+      if (action === 'button_remote') workStyle = 'remote';
 
-    if (countError) throw countError;
+      // Supabaseにデータを保存/更新
+      const { data: existingRecord, error: fetchError } = await supabase
+        .from('Record')
+        .select('*')
+        .eq('ymd', ymd)
+        .eq('user_id', userId)
+        .single();
 
-    console.log('countData:', countData);
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
 
-    // 各勤務場所の人数を集計
-    const officeCount = countData.filter(
-      (d) => d.workStyle === 'office'
-    ).length;
-    const remoteCount = countData.filter(
-      (d) => d.workStyle === 'remote'
-    ).length;
+      if (!existingRecord) {
+        // レコードが存在しない場合はINSERT
+        const { error: insertError } = await supabase
+          .from('Record')
+          .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
 
-    console.log('officeCount:', officeCount);
-    console.log('remoteCount:', remoteCount);
+        if (insertError) throw insertError;
+        console.log('Inserted new record for', userId);
+      } else {
+        // 既存のレコードがあり、workStyleが異なる場合はUPDATE
+        if (existingRecord.workStyle !== workStyle) {
+          const { error: updateError } = await supabase
+            .from('Record')
+            .update({ workStyle: workStyle })
+            .eq('id', existingRecord.id);
 
-    // メッセージを更新
-    await client.chat.update({
-      channel: payload.channel.id,
-      ts: payload.message.ts,
-      text: messageText, // 元のメッセージを保持
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: messageText,
+          if (updateError) throw updateError;
+          console.log('Updated record for', userId);
+        } else {
+          // 同じworkStyleの場合は変更なし
+          console.log('No change needed, already selected', workStyle);
+        }
+      }
+
+      // 現在の人数を集計
+      const {
+        data: countData,
+        error: countError,
+        count,
+      } = await supabase
+        .from('Record')
+        .select('workStyle', { count: 'exact' })
+        .eq('ymd', ymd);
+
+      if (countError) throw countError;
+
+      console.log('countData:', countData);
+
+      // 各勤務場所の人数を集計
+      const officeCount = countData.filter(
+        (d) => d.workStyle === 'office'
+      ).length;
+      const remoteCount = countData.filter(
+        (d) => d.workStyle === 'remote'
+      ).length;
+
+      console.log('officeCount:', officeCount);
+      console.log('remoteCount:', remoteCount);
+
+      // メッセージを更新
+      await client.chat.update({
+        channel: payload.channel.id,
+        ts: payload.message.ts,
+        text: messageText, // 元のメッセージを保持
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: messageText,
+            },
           },
-        },
-        {
-          type: 'actions',
-          elements: [
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: `🏢 本社勤務 (${officeCount})`,
-                emoji: true,
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: `🏢 本社勤務 (${officeCount})`,
+                  emoji: true,
+                },
+                action_id: 'button_office',
+                style: workStyle === 'office' ? 'primary' : undefined,
               },
-              action_id: 'button_office',
-              style: workStyle === 'office' ? 'primary' : undefined,
-            },
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: `🏠 在宅勤務 (${remoteCount})`,
-                emoji: true,
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: `🏠 在宅勤務 (${remoteCount})`,
+                  emoji: true,
+                },
+                action_id: 'button_remote',
+                style: workStyle === 'remote' ? 'primary' : undefined,
               },
-              action_id: 'button_remote',
-              style: workStyle === 'remote' ? 'primary' : undefined,
-            },
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: `📋 一覧`,
-                emoji: true,
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: `📋 一覧`,
+                  emoji: true,
+                },
+                action_id: 'button_list',
               },
-              action_id: 'button_list',
-            },
-          ],
-        },
-      ],
-    });
+            ],
+          },
+        ],
+      });
+    }
 
     res.status(200).send();
   } catch (error) {
