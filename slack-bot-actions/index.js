@@ -66,8 +66,6 @@ async function sendInteractiveMessage() {
                 emoji: true,
               },
               action_id: 'button_list',
-              value: 'show_list', // 必要なら追加パラメータ
-              url: null, // 外部リンクではないので設定不要
             },
           ],
         },

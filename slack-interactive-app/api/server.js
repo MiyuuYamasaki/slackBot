@@ -104,17 +104,17 @@ app.post('/slack/actions', async (req, res) => {
     console.log('officeCount:', officeCount);
     console.log('remoteCount:', remoteCount);
 
-    // ボタンの状態を更新
+    // メッセージを更新
     await client.chat.update({
       channel: payload.channel.id,
       ts: payload.message.ts,
-      text: messageText, // 元のテキストを保持
+      text: messageText, // 元のメッセージを保持
       blocks: [
         {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: messageText, // 元のテキストを保持
+            text: messageText,
           },
         },
         {
