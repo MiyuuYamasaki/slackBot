@@ -108,7 +108,7 @@ app.post('/slack/actions', async (req, res) => {
     await client.chat.update({
       channel: payload.channel.id,
       ts: payload.message.ts,
-      text: messageText, // 元のメッセージのtextを維持
+      text: payload.message.text, // 元のメッセージのtextを維持
       blocks: [
         {
           type: 'actions',
@@ -117,7 +117,7 @@ app.post('/slack/actions', async (req, res) => {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: `本社勤務 （${officeCount}）`,
+                text: `本社勤務 (${officeCount})`,
               },
               action_id: 'button_office',
               style: workStyle === 'office' ? 'primary' : undefined,
@@ -126,7 +126,7 @@ app.post('/slack/actions', async (req, res) => {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: `在宅勤務 （${remoteCount}）`,
+                text: `在宅勤務 (${remoteCount})`,
               },
               action_id: 'button_remote',
               style: workStyle === 'remote' ? 'primary' : undefined,
