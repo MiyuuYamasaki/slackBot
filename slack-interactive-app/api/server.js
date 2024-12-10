@@ -71,10 +71,13 @@ app.post('/slack/actions', async (req, res) => {
 
     // 現在の人数を集計
     const { data: countData, error: countError } = await supabase
+      // .from('Record')
+      // .select('workStyle', { count: '*' })
+      // .eq('ymd', ymd)
+      // .groupBy('"workStyle"'); // 'groupBy'を使用
       .from('Record')
-      .select('workStyle', { count: '*' })
-      .eq('ymd', ymd)
-      .groupBy('"workStyle"'); // 'groupBy'を使用
+      .select('*', { count: 'exact' })
+      .match({ ymd: ymd });
 
     if (countError) throw countError;
 
