@@ -76,7 +76,7 @@ app.post('/slack/actions', async (req, res) => {
       // .eq('ymd', ymd)
       // .groupBy('"workStyle"'); // 'groupBy'を使用
       .from('Record')
-      .select('*', { count: 'exact' })
+      .select('workStyle', { count: 'exact' })
       .match({ ymd: ymd });
 
     if (countError) throw countError;
