@@ -66,7 +66,7 @@ app.post('/slack/actions', async (req, res) => {
             .map((record) => `<@${record.user_id}>`)
             .join('\n') || 'なし';
 
-        const message = `📋 *${ymd} の勤務場所一覧:*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}`;
+        const message = `📋 *${ymd} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${remoteUsers}`;
 
         await client.chat.postEphemeral({
           channel: payload.channel.id,
