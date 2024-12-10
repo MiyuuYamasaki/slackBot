@@ -49,16 +49,16 @@ app.post('/slack/actions', async (req, res) => {
       // レコードが存在しない場合はINSERT
       const { error: insertError } = await supabase
         .from('Record')
-        .insert([{ ymd, user_id: userId, work_mode: workStyle }]);
+        .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
 
       if (insertError) throw insertError;
       console.log('Inserted new record for', userId);
     } else {
       // 既存のレコードがあり、workStyleが異なる場合はUPDATE
-      if (existingRecord.work_mode !== workStyle) {
+      if (existingRecord.workStyle !== workStyle) {
         const { error: updateError } = await supabase
           .from('Record')
-          .update({ work_mode: workStyle })
+          .update({ workStyle: workStyle })
           .eq('id', existingRecord.id);
 
         if (updateError) throw updateError;
