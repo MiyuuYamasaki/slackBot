@@ -30,6 +30,8 @@ app.post('/slack/actions', async (req, res) => {
     const messageText = payload.message.text;
     const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/); // 日付（例: 2024/12/10）を抽出
 
+    console.log(messageText);
+
     if (!ymdMatch) {
       throw new Error('Date not found in the message text');
     }
@@ -115,7 +117,7 @@ app.post('/slack/actions', async (req, res) => {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: `本社勤務 (${officeCount})`,
+                text: `本社勤務 （${officeCount}）`,
               },
               action_id: 'button_office',
               style: workStyle === 'office' ? 'primary' : undefined,
@@ -124,7 +126,7 @@ app.post('/slack/actions', async (req, res) => {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: `在宅勤務 (${remoteCount})`,
+                text: `在宅勤務 （${remoteCount}）`,
               },
               action_id: 'button_remote',
               style: workStyle === 'remote' ? 'primary' : undefined,
