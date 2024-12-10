@@ -51,19 +51,19 @@ app.post('/slack/actions', async (req, res) => {
       const officeUsers =
         records
           .filter((record) => record.workStyle === 'office')
-          .map((record) => `<@${record.user_id}>`)
+          .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
       const remoteUsers =
         records
           .filter((record) => record.workStyle === 'remote')
-          .map((record) => `<@${record.user_id}>`)
+          .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
       const vacationUsers =
         records
           .filter((record) => record.workStyle === null)
-          .map((record) => `<@${record.user_id}>`)
+          .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
       // メッセージを構築
