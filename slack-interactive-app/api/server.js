@@ -69,12 +69,13 @@ app.post('/slack/actions', async (req, res) => {
     // 現在の人数を集計
     const { data: countData, error: countError } = await supabase
       .from('Record')
-      .select('work_mode, count(*)', { count: 'exact' })
+      .select('work_mode, count(*)')
       .eq('ymd', ymd)
-      .group('work_mode');
+      .groupBy('work_mode'); // 'groupBy'を使用
 
     if (countError) throw countError;
 
+    // 各勤務場所の人数を取得
     const officeCount =
       countData.find((d) => d.work_mode === 'office')?.count || 0;
     const remoteCount =
