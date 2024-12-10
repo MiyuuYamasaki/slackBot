@@ -53,19 +53,19 @@ app.post('/slack/actions', async (req, res) => {
       // データを分類
       const officeUsers =
         records
-          .filter((record) => record.workStyle === 'office')
+          .filter((record) => record.work_style === 'office')
           .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
       const remoteUsers =
         records
-          .filter((record) => record.workStyle === 'remote')
+          .filter((record) => record.work_style === 'remote')
           .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
       const vacationUsers =
         records
-          .filter((record) => record.workStyle === null)
+          .filter((record) => record.work_style === null)
           .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
