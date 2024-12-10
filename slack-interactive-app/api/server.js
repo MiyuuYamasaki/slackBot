@@ -25,7 +25,17 @@ app.post('/slack/actions', async (req, res) => {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
     const action = payload.actions[0].action_id;
     const userId = payload.user?.name;
-    const ymd = new Date().toISOString().split('T')[0]; // 今日の日付
+
+    // ボタンが押されたメッセージのtextを取得
+    const messageText = payload.message.text;
+    const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/); // 日付（例: 2024/12/10）を抽出
+
+    if (!ymdMatch) {
+      throw new Error('Date not found in the message text');
+    }
+
+    const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
+    console.log('Extracted YMD:', ymd);
 
     let workStyle = null;
     if (action === 'button_office') workStyle = 'office';
@@ -37,13 +47,11 @@ app.post('/slack/actions', async (req, res) => {
       .select('*')
       .eq('ymd', ymd)
       .eq('user_id', userId)
-      .single(); // user_idとymdでレコードを取得
+      .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       throw fetchError;
     }
-
-    console.log(existingRecord);
 
     if (!existingRecord) {
       // レコードが存在しない場合はINSERT
