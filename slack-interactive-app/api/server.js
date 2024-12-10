@@ -47,8 +47,6 @@ app.post('/slack/actions', async (req, res) => {
 
       if (queryError) throw queryError;
 
-      console.log(records);
-
       // データを分類
       const officeUsers =
         records
