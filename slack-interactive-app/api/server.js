@@ -108,8 +108,15 @@ app.post('/slack/actions', async (req, res) => {
     await client.chat.update({
       channel: payload.channel.id,
       ts: payload.message.ts,
-      text: 'payload.message.text, // 元のメッセージのtextを維持',
+      text: payload.message.text,
       blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: payload.message.text,
+          },
+        },
         {
           type: 'actions',
           elements: [
