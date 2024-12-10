@@ -26,8 +26,7 @@ app.post('/slack/actions', async (req, res) => {
   try {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
     const action = payload.actions[0].action_id;
-    const userId = payload.user.id; // SlackのユーザーID
-    const userName = payload.user.name;
+    const userId = payload.user?.name;
     const ymd = new Date().toISOString().split('T')[0]; // 今日の日付
 
     let workMode = null;
@@ -36,7 +35,7 @@ app.post('/slack/actions', async (req, res) => {
 
     // Supabaseにデータを保存/更新
     const { data: existingRecord, error: fetchError } = await supabase
-      .from('record_table')
+      .from('Record')
       .select('*')
       .eq('ymd', ymd)
       .eq('user_id', userId)
@@ -51,27 +50,27 @@ app.post('/slack/actions', async (req, res) => {
       if (existingRecord.work_mode === workMode) {
         // 同じボタンを押した場合 -> キャンセル
         await supabase
-          .from('record_table')
+          .from('Record')
           .update({ work_mode: null })
           .eq('id', existingRecord.id);
         workMode = null;
       } else {
         // 別のボタンを押した場合 -> 更新
         await supabase
-          .from('record_table')
+          .from('Record')
           .update({ work_mode })
           .eq('id', existingRecord.id);
       }
     } else {
       // 初回選択時 -> 新規作成
       await supabase
-        .from('record_table')
+        .from('Record')
         .insert([{ ymd, user_id: userId, work_mode: workMode }]);
     }
 
     // 現在の人数を集計
     const { data: countData, error: countError } = await supabase
-      .from('record_table')
+      .from('Record')
       .select('work_mode, count(*)', { count: 'exact' })
       .eq('ymd', ymd)
       .group('work_mode');
