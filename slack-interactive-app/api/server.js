@@ -37,13 +37,37 @@ app.post('/slack/actions', async (req, res) => {
       .select('*')
       .eq('ymd', ymd)
       .eq('user_id', userId)
-      .single();
+      .single(); // user_idとymdでレコードを取得
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       throw fetchError;
     }
 
     console.log(existingRecord);
+
+    if (!existingRecord) {
+      // レコードが存在しない場合はINSERT
+      const { error: insertError } = await supabase
+        .from('Record')
+        .insert([{ ymd, user_id: userId, work_mode: workStyle }]);
+
+      if (insertError) throw insertError;
+      console.log('Inserted new record for', userId);
+    } else {
+      // 既存のレコードがあり、workStyleが異なる場合はUPDATE
+      if (existingRecord.work_mode !== workStyle) {
+        const { error: updateError } = await supabase
+          .from('Record')
+          .update({ work_mode: workStyle })
+          .eq('id', existingRecord.id);
+
+        if (updateError) throw updateError;
+        console.log('Updated record for', userId);
+      } else {
+        // 同じworkStyleの場合は変更なし
+        console.log('No change needed, already selected', workStyle);
+      }
+    }
 
     // if (existingRecord) {
     //   // 既存のレコードがある場合、キャンセルか変更
