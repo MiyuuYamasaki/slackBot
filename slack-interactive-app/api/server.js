@@ -108,13 +108,13 @@ app.post('/slack/actions', async (req, res) => {
     await client.chat.update({
       channel: payload.channel.id,
       ts: payload.message.ts,
-      text: payload.message.text,
+      text: messageText, // 元のテキストを保持
       blocks: [
         {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: payload.message.text,
+            text: messageText, // 元のテキストを保持
           },
         },
         {
@@ -124,7 +124,8 @@ app.post('/slack/actions', async (req, res) => {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: `本社勤務 (${officeCount})`,
+                text: `🏢 本社勤務 (${officeCount})`,
+                emoji: true,
               },
               action_id: 'button_office',
               style: workStyle === 'office' ? 'primary' : undefined,
@@ -133,47 +134,27 @@ app.post('/slack/actions', async (req, res) => {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: `在宅勤務 (${remoteCount})`,
+                text: `🏠 在宅勤務 (${remoteCount})`,
+                emoji: true,
               },
               action_id: 'button_remote',
               style: workStyle === 'remote' ? 'primary' : undefined,
+            },
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: `📋 一覧`,
+                emoji: true,
+              },
+              action_id: 'button_list',
+              value: 'show_list', // 必要なら追加パラメータ
+              url: null, // 外部リンクではないので設定不要
             },
           ],
         },
       ],
     });
-
-    // // ボタンの状態を更新
-    // await client.chat.update({
-    //   channel: payload.channel.id,
-    //   ts: payload.message.ts,
-    //   text: '勤務場所を選択してください:',
-    //   blocks: [
-    //     {
-    //       type: 'actions',
-    //       elements: [
-    //         {
-    //           type: 'button',
-    //           text: {
-    //             type: 'plain_text',
-    //             text: `本社勤務 (${officeCount})`,
-    //           },
-    //           action_id: 'button_office',
-    //           style: workStyle === 'office' ? 'primary' : undefined,
-    //         },
-    //         {
-    //           type: 'button',
-    //           text: {
-    //             type: 'plain_text',
-    //             text: `在宅勤務 (${remoteCount})`,
-    //           },
-    //           action_id: 'button_remote',
-    //           style: workStyle === 'remote' ? 'primary' : undefined,
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // });
 
     res.status(200).send();
   } catch (error) {

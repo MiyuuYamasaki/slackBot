@@ -44,7 +44,8 @@ async function sendInteractiveMessage() {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: '本社勤務',
+                text: '🏢 本社勤務',
+                emoji: true,
               },
               action_id: 'button_office', // ボタンの識別子
             },
@@ -52,9 +53,21 @@ async function sendInteractiveMessage() {
               type: 'button',
               text: {
                 type: 'plain_text',
-                text: '在宅勤務',
+                text: '🏠 在宅勤務',
+                emoji: true,
               },
               action_id: 'button_remote', // ボタンの識別子
+            },
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: `📋 一覧`,
+                emoji: true,
+              },
+              action_id: 'button_list',
+              value: 'show_list', // 必要なら追加パラメータ
+              url: null, // 外部リンクではないので設定不要
             },
           ],
         },
