@@ -48,6 +48,10 @@ app.post('/slack/actions', async (req, res) => {
       console.log('ymd_param:' + ymd);
       console.log('Data:', records);
 
+      records.foreach((record) => {
+        console.log(record.workStyle);
+      });
+
       if (queryError) throw queryError;
 
       // データを分類
