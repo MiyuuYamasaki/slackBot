@@ -81,6 +81,8 @@ app.post('/slack/actions', async (req, res) => {
 
     if (countError) throw countError;
 
+    console.log('countData:' + countData);
+
     // 各勤務場所の人数を取得
     const officeCount =
       countData.find((d) => d.workStyle === 'office')?.count || 0;
