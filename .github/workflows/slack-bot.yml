@@ -4,7 +4,7 @@ name: Slack Bot
 on:
   schedule:
     # 平日の日本時間AM8:00に実行 (UTCでは0:00)
-    - cron: '0 0 * * 1-5' # GitHub ActionsのcronはUTCで指定
+    - cron: '23 0 * * 1-5' # GitHub ActionsのcronはUTCで指定
   workflow_dispatch: # 手動で実行できるようにする
 
 jobs:
