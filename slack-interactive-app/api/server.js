@@ -46,7 +46,7 @@ app.post('/slack/actions', async (req, res) => {
       );
 
       console.log('ymd_param:' + ymd);
-      onsole.log('Data:', data);
+      console.log('Data:', data);
 
       if (queryError) throw queryError;
 
