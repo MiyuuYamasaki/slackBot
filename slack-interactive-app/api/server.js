@@ -351,7 +351,7 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                style: leaveCheck % 2 === 0 ? undefined : 'primary',
+                style: leaveCheck % 2 === 0 ? undefined : 'outline',
               },
             ],
           },
