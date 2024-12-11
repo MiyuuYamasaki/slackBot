@@ -36,20 +36,20 @@ app.post('/slack/actions', async (req, res) => {
 
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
 
-    // クエリを実行してデータを取得
-    const { data: records, error: queryError } = await supabase.rpc(
-      'custom_query',
-      {
-        ymd_param: ymd, // SQLに渡す日付パラメータ
-      }
-    );
-
-    if (queryError) {
-      console.error('Error fetching records:', queryError);
-      throw queryError;
-    }
-
     if (action === 'button_list') {
+      // クエリを実行してデータを取得
+      const { data: records, error: queryError } = await supabase.rpc(
+        'custom_query',
+        {
+          ymd_param: ymd, // SQLに渡す日付パラメータ
+        }
+      );
+
+      if (queryError) {
+        console.error('Error fetching records:', queryError);
+        throw queryError;
+      }
+
       // データを分類
       const officeUsers =
         records
@@ -117,6 +117,19 @@ app.post('/slack/actions', async (req, res) => {
           // 同じworkStyleの場合は変更なし
           console.log('No change needed, already selected', workStyle);
         }
+      }
+
+      // クエリを実行してデータを取得
+      const { data: records, error: queryError } = await supabase.rpc(
+        'custom_query',
+        {
+          ymd_param: ymd, // SQLに渡す日付パラメータ
+        }
+      );
+
+      if (queryError) {
+        console.error('Error fetching records:', queryError);
+        throw queryError;
       }
 
       // 各勤務場所の人数を集計
