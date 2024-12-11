@@ -264,14 +264,28 @@ app.post('/slack/actions', async (req, res) => {
       console.log('leaveCheck+1:' + leaveCheck);
       console.log('leaveCheck:' + existingRecord.leaveCheck);
 
+      // クエリを実行してデータを取得
+      const { data: records, error: queryError } = await supabase.rpc(
+        'custom_query',
+        {
+          ymd_param: ymd, // SQLに渡す日付パラメータ
+        }
+      );
+
+      if (queryError) {
+        console.error('Error fetching records:', queryError);
+        throw queryError;
+      }
+
       // 各勤務場所の人数を集計
-      const officeCount = existingRecord.filter(
-        (record) => record.workStyle === 'office'
+      const officeCount = records.filter(
+        (record) => record.work_style === 'office'
       ).length;
-      const remoteCount = existingRecord.filter(
-        (record) => record.workStyle === 'remote'
+      const remoteCount = records.filter(
+        (record) => record.work_style === 'remote'
       ).length;
 
+      // leaveCheck更新
       const { error: updateError } = await supabase
         .from('Record')
         .update({ leaveCheck: leaveCheck + 1 })
