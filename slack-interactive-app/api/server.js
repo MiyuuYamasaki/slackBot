@@ -260,7 +260,7 @@ app.post('/slack/actions', async (req, res) => {
         throw fetchError;
       }
 
-      let leaveCheck = existingRecord.leaveCheck + 1;
+      let leaveCheck = (existingRecord.leaveCheck || 0) + 1; // leaveCheckが存在しない場合0を使う
       console.log('leaveCheck+1:' + leaveCheck);
       console.log('leaveCheck:' + existingRecord.leaveCheck);
 
@@ -320,7 +320,9 @@ app.post('/slack/actions', async (req, res) => {
                 },
                 action_id: 'button_office',
                 style:
-                  existingRecord.workStyle === 'office' ? 'primary' : undefined, //☆
+                  existingRecord && existingRecord.workStyle === 'office'
+                    ? 'primary'
+                    : undefined,
               },
               {
                 type: 'button',
@@ -331,7 +333,9 @@ app.post('/slack/actions', async (req, res) => {
                 },
                 action_id: 'button_remote',
                 style:
-                  existingRecord.workStyle === 'remote' ? 'primary' : undefined, //☆
+                  existingRecord && existingRecord.workStyle === 'office'
+                    ? 'primary'
+                    : undefined,
               },
               {
                 type: 'button',
@@ -350,7 +354,7 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                style: leaveCheck / 2 === 0 ? 'default' : 'outline',
+                style: leaveCheck % 2 === 0 ? 'default' : 'outline',
               },
             ],
           },
