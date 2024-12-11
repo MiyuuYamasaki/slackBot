@@ -55,19 +55,34 @@ app.post('/slack/actions', async (req, res) => {
       const officeUsers =
         records
           .filter((record) => record.work_style === 'office')
-          .map((record) => `<@${record.user_name}>`)
+          .map((record) => {
+            // leaveCheckが奇数の場合に「退勤済」を追加
+            return `<@${record.user_name}>${
+              record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+            }`;
+          })
           .join('\n') || 'なし';
 
       const remoteUsers =
         records
           .filter((record) => record.work_style === 'remote')
-          .map((record) => `<@${record.user_name}>`)
+          .map((record) => {
+            // leaveCheckが奇数の場合に「退勤済」を追加
+            return `<@${record.user_name}>${
+              record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+            }`;
+          })
           .join('\n') || 'なし';
 
       const vacationUsers =
         records
           .filter((record) => record.work_style === '休暇')
-          .map((record) => `<@${record.user_name}>`)
+          .map((record) => {
+            // leaveCheckが奇数の場合に「退勤済」を追加
+            return `<@${record.user_name}>${
+              record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+            }`;
+          })
           .join('\n') || 'なし';
 
       // モーダルビューの構築
@@ -230,10 +245,11 @@ app.post('/slack/actions', async (req, res) => {
                 type: 'button',
                 text: {
                   type: 'plain_text',
-                  text: `👋 退勤`,
+                  text: `👋 退勤する`,
                   emoji: true,
                 },
                 action_id: 'button_goHome',
+                style: 'danger',
               },
             ],
           },
@@ -347,11 +363,11 @@ app.post('/slack/actions', async (req, res) => {
                 type: 'button',
                 text: {
                   type: 'plain_text',
-                  text: `👋 退勤`,
+                  text: leaveCheck % 2 === 0 ? `👋 退勤する` : `👋 退勤済`,
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                style: leaveCheck % 2 === 0 ? undefined : 'danger',
+                style: 'danger',
               },
             ],
           },
