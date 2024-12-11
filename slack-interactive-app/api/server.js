@@ -278,6 +278,15 @@ app.post('/slack/actions', async (req, res) => {
                 },
                 action_id: 'button_list',
               },
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: `👋 退勤`,
+                  emoji: true,
+                },
+                action_id: 'button_goHome',
+              },
             ],
           },
         ],
