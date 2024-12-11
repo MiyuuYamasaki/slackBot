@@ -244,9 +244,6 @@ app.post('/slack/actions', async (req, res) => {
 
     if (action === 'button_goHome') {
       console.log('▼ goHome action start');
-      // 現在の時刻を取得
-      const leaveCheck = true;
-      console.log('leaveTime:', leaveCheck);
 
       // Supabaseにデータを保存/更新
       const { data: existingRecord, error: fetchError } = await supabase
@@ -263,12 +260,23 @@ app.post('/slack/actions', async (req, res) => {
         throw fetchError;
       }
 
+      // 各勤務場所の人数を集計
+      const officeCount = existingRecord.filter(
+        (record) => record.workStyle === 'office'
+      ).length;
+      const remoteCount = existingRecord.filter(
+        (record) => record.workStyle === 'remote'
+      ).length;
+
       const { error: updateError } = await supabase
         .from('Record')
-        .update({ leaveCheck: leaveCheck })
+        .update({ leaveCheck: leaveCheck + 1 })
         .eq('id', existingRecord.id);
 
       if (updateError) throw updateError;
+
+      let leaveCheck = existingRecord.leaveCheck + 1;
+      console.log('leaveCheck:' + leaveCheck);
 
       console.log('Updated record for userId:', userId);
 
@@ -288,26 +296,28 @@ app.post('/slack/actions', async (req, res) => {
           {
             type: 'actions',
             elements: [
-              // {
-              //   type: 'button',
-              //   text: {
-              //     type: 'plain_text',
-              //     text: `🏢 本社勤務 (${officeCount})`,
-              //     emoji: true,
-              //   },
-              //   action_id: 'button_office',
-              //   style: workStyle === 'office' ? 'primary' : undefined,
-              // },
-              // {
-              //   type: 'button',
-              //   text: {
-              //     type: 'plain_text',
-              //     text: `🏠 在宅勤務 (${remoteCount})`,
-              //     emoji: true,
-              //   },
-              //   action_id: 'button_remote',
-              //   style: workStyle === 'remote' ? 'primary' : undefined,
-              // },
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: `🏢 本社勤務 (${officeCount})`, //☆
+                  emoji: true,
+                },
+                action_id: 'button_office',
+                style:
+                  existingRecord.workStyle === 'office' ? 'primary' : undefined, //☆
+              },
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: `🏠 在宅勤務 (${remoteCount})`, //☆
+                  emoji: true,
+                },
+                action_id: 'button_remote',
+                style:
+                  existingRecord.workStyle === 'remote' ? 'primary' : undefined, //☆
+              },
               {
                 type: 'button',
                 text: {
@@ -325,7 +335,7 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                style: leaveCheck ? 'primary' : undefined,
+                style: leaveCheck / 2 === 0 ? 'default' : 'outline',
               },
             ],
           },
