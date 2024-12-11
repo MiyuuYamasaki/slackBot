@@ -260,9 +260,7 @@ app.post('/slack/actions', async (req, res) => {
         throw fetchError;
       }
 
-      let leaveCheck = (existingRecord.leaveCheck || 0) + 1; // leaveCheckが存在しない場合0を使う
-      console.log('leaveCheck+1:' + leaveCheck);
-      console.log('leaveCheck:' + existingRecord.leaveCheck);
+      let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
 
       // クエリを実行してデータを取得
       const { data: records, error: queryError } = await supabase.rpc(
@@ -288,7 +286,7 @@ app.post('/slack/actions', async (req, res) => {
       // leaveCheck更新
       const { error: updateError } = await supabase
         .from('Record')
-        .update({ leaveCheck: leaveCheck + 1 })
+        .update({ leaveCheck: leaveCheck })
         .eq('id', existingRecord.id);
 
       if (updateError) throw updateError;
@@ -353,7 +351,7 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                style: leaveCheck % 2 === 0 ? 'primary' : undefined,
+                style: leaveCheck % 2 === 0 ? undefined : 'primary',
               },
             ],
           },
