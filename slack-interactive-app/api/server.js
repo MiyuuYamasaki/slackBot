@@ -135,10 +135,10 @@ app.post('/slack/actions', async (req, res) => {
 
       // 各勤務場所の人数を集計
       const officeCount = records.filter(
-        (d) => d.workStyle === 'office'
+        (record) => record.work_style === 'office'
       ).length;
       const remoteCount = records.filter(
-        (d) => d.workStyle === 'remote'
+        (record) => record.work_style === 'remote'
       ).length;
 
       console.log('officeCount:', officeCount);
@@ -182,7 +182,20 @@ app.post('/slack/actions', async (req, res) => {
                 },
                 action_id: 'button_office',
                 value: 'office',
-                description: officeUsersTooltip || 'まだ選択者がいません',
+                confirm: {
+                  title: {
+                    type: 'plain_text',
+                    text: '本社勤務者',
+                  },
+                  text: {
+                    type: 'mrkdwn',
+                    text: officeUsersTooltip || 'まだ選択者がいません',
+                  },
+                  confirm: {
+                    type: 'plain_text',
+                    text: '閉じる',
+                  },
+                },
               },
               {
                 type: 'button',
@@ -193,7 +206,20 @@ app.post('/slack/actions', async (req, res) => {
                 },
                 action_id: 'button_remote',
                 value: 'remote',
-                description: remoteUsersTooltip || 'まだ選択者がいません',
+                confirm: {
+                  title: {
+                    type: 'plain_text',
+                    text: '在宅勤務者',
+                  },
+                  text: {
+                    type: 'mrkdwn',
+                    text: remoteUsersTooltip || 'まだ選択者がいません',
+                  },
+                  confirm: {
+                    type: 'plain_text',
+                    text: '閉じる',
+                  },
+                },
               },
               {
                 type: 'button',
