@@ -37,6 +37,7 @@ app.post('/slack/actions', async (req, res) => {
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
 
     if (action === 'button_list') {
+      console.log('▼ createList action start');
       // クエリを実行してデータを取得
       const { data: records, error: queryError } = await supabase.rpc(
         'custom_query',
@@ -111,51 +112,11 @@ app.post('/slack/actions', async (req, res) => {
         trigger_id: payload.trigger_id,
         view: modalView,
       });
+      console.log('▼ createList action end');
     }
 
-    // if (action === 'button_list') {
-    //   // クエリを実行してデータを取得
-    //   const { data: records, error: queryError } = await supabase.rpc(
-    //     'custom_query',
-    //     {
-    //       ymd_param: ymd, // SQLに渡す日付パラメータ
-    //     }
-    //   );
-
-    //   if (queryError) {
-    //     console.error('Error fetching records:', queryError);
-    //     throw queryError;
-    //   }
-
-    //   // データを分類
-    //   const officeUsers =
-    //     records
-    //       .filter((record) => record.work_style === 'office')
-    //       .map((record) => `<@${record.user_name}>`)
-    //       .join('\n') || 'なし';
-
-    //   const remoteUsers =
-    //     records
-    //       .filter((record) => record.work_style === 'remote')
-    //       .map((record) => `<@${record.user_name}>`)
-    //       .join('\n') || 'なし';
-
-    //   const vacationUsers =
-    //     records
-    //       .filter((record) => record.work_style === '休暇')
-    //       .map((record) => `<@${record.user_name}>`)
-    //       .join('\n') || 'なし';
-
-    //   // メッセージを構築
-    //   const message = `📋 *${ymd} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${vacationUsers}`;
-    //   await client.chat.postEphemeral({
-    //     channel: payload.channel.id,
-    //     user: payload.user.id,
-    //     text: message,
-    //   });
-    // }
-
     if (action === 'button_office' || action === 'button_remote') {
+      console.log('▼ dateSet action start');
       let workStyle = null;
       if (action === 'button_office') workStyle = 'office';
       if (action === 'button_remote') workStyle = 'remote';
@@ -291,6 +252,39 @@ app.post('/slack/actions', async (req, res) => {
           },
         ],
       });
+      console.log('▼ dateSet action end');
+    }
+
+    if (action === 'button_goHome') {
+      console.log('▼ goHome action start');
+      // 現在の時刻を取得
+      let leaveTime = Date.now();
+      console.log('leaveTime:' + leaveTime);
+
+      // // Supabaseにデータを保存/更新
+      // const { data: existingRecord, error: fetchError } = await supabase
+      //   .from('Record')
+      //   .select('*')
+      //   .eq('ymd', ymd)
+      //   .eq('user_id', userId)
+      //   .single();
+
+      // if (fetchError && fetchError.code !== 'PGRST116') {
+      //   throw fetchError;
+      // }
+
+      // if (!existingRecord) {
+      //   console.log('No change necessary. Not yet selected.');
+      // } else {
+      //   const { error: updateError } = await supabase
+      //     .from('Record')
+      //     .update({ leaveTime: leaveTime })
+      //     .eq('id', existingRecord.id);
+
+      //   if (updateError) throw updateError;
+      //   console.log('Updated record for', userId);
+      // }
+      console.log('▼ goHome action end');
     }
 
     res.status(200).send();
