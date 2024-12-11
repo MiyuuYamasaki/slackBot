@@ -258,8 +258,8 @@ app.post('/slack/actions', async (req, res) => {
     if (action === 'button_goHome') {
       console.log('▼ goHome action start');
       // 現在の時刻を取得
-      const leaveTime = Math.floor(Date.now() / 1000); // Unixタイムスタンプ（秒単位）
-      console.log('leaveTime:', leaveTime);
+      const leaveCheck = true;
+      console.log('leaveTime:', leaveCheck);
 
       // Supabaseにデータを保存/更新
       const { data: existingRecord, error: fetchError } = await supabase
@@ -278,7 +278,7 @@ app.post('/slack/actions', async (req, res) => {
 
       const { error: updateError } = await supabase
         .from('Record')
-        .update({ leaveTime: leaveTime })
+        .update({ leaveCheck: leaveCheck })
         .eq('id', existingRecord.id);
 
       if (updateError) throw updateError;
