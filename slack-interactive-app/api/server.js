@@ -260,6 +260,10 @@ app.post('/slack/actions', async (req, res) => {
         throw fetchError;
       }
 
+      let leaveCheck = existingRecord.leaveCheck + 1;
+      console.log('leaveCheck+1:' + leaveCheck);
+      console.log('leaveCheck:' + existingRecord.leaveCheck);
+
       // 各勤務場所の人数を集計
       const officeCount = existingRecord.filter(
         (record) => record.workStyle === 'office'
@@ -274,9 +278,6 @@ app.post('/slack/actions', async (req, res) => {
         .eq('id', existingRecord.id);
 
       if (updateError) throw updateError;
-
-      let leaveCheck = existingRecord.leaveCheck + 1;
-      console.log('leaveCheck:' + leaveCheck);
 
       console.log('Updated record for userId:', userId);
 
