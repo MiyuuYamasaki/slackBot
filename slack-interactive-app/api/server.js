@@ -359,6 +359,9 @@ app.post('/slack/actions', async (req, res) => {
           },
         ],
       });
+      if (response.error) {
+        console.error('Error:', response.error);
+      }
 
       console.log('▲ goHome action end');
     }
