@@ -119,26 +119,12 @@ app.post('/slack/actions', async (req, res) => {
         }
       }
 
-      // 現在の人数を集計
-      // const {
-      //   data: countData,
-      //   error: countError,
-      //   count,
-      // } = await supabase
-      //   .from('Record')
-      //   .select('workStyle', { count: 'exact' })
-      //   .eq('ymd', ymd);
-
-      // if (countError) throw countError;
-
-      // console.log('countData:', countData);
-
       // 各勤務場所の人数を集計
       const officeCount = records.filter(
-        (record) => record.work_style === 'office'
+        (record) => record.workStyle === 'office'
       ).length;
-      const remoteCount = records.filter(
-        (record) => record.work_style === 'remote'
+      const remoteCount = countData.filter(
+        (record) => record.workStyle === 'remote'
       ).length;
 
       console.log('officeCount:', officeCount);
@@ -181,7 +167,7 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_office',
-                value: 'office',
+                style: workStyle === 'office' ? 'primary' : undefined,
               },
               {
                 type: 'button',
@@ -191,7 +177,7 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_remote',
-                value: 'remote',
+                style: workStyle === 'remote' ? 'primary' : undefined,
               },
               {
                 type: 'button',
