@@ -123,7 +123,7 @@ app.post('/slack/actions', async (req, res) => {
       const officeCount = records.filter(
         (record) => record.workStyle === 'office'
       ).length;
-      const remoteCount = countData.filter(
+      const remoteCount = records.filter(
         (record) => record.workStyle === 'remote'
       ).length;
 
