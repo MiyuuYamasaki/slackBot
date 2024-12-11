@@ -36,20 +36,20 @@ app.post('/slack/actions', async (req, res) => {
 
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
 
-    if (action === 'button_list') {
-      // クエリを実行してデータを取得
-      const { data: records, error: queryError } = await supabase.rpc(
-        'custom_query',
-        {
-          ymd_param: ymd, // SQLに渡す日付パラメータ
-        }
-      );
-
-      if (queryError) {
-        console.error('Query error:', queryError);
-        return;
+    // クエリを実行してデータを取得
+    const { data: records, error: queryError } = await supabase.rpc(
+      'custom_query',
+      {
+        ymd_param: ymd, // SQLに渡す日付パラメータ
       }
+    );
 
+    if (queryError) {
+      console.error('Query error:', queryError);
+      return;
+    }
+
+    if (action === 'button_list') {
       // データを分類
       const officeUsers =
         records
@@ -120,21 +120,21 @@ app.post('/slack/actions', async (req, res) => {
       }
 
       // 現在の人数を集計
-      const {
-        data: countData,
-        error: countError,
-        count,
-      } = await supabase
-        .from('Record')
-        .select('workStyle', { count: 'exact' })
-        .eq('ymd', ymd);
+      // const {
+      //   data: countData,
+      //   error: countError,
+      //   count,
+      // } = await supabase
+      //   .from('Record')
+      //   .select('workStyle', { count: 'exact' })
+      //   .eq('ymd', ymd);
 
-      if (countError) throw countError;
+      // if (countError) throw countError;
 
-      console.log('countData:', countData);
+      // console.log('countData:', countData);
 
       // 各勤務場所の人数を集計
-      const officeCount = countData.filter(
+      const officeCount = records.filter(
         (d) => d.workStyle === 'office'
       ).length;
       const remoteCount = countData.filter(
@@ -143,6 +143,19 @@ app.post('/slack/actions', async (req, res) => {
 
       console.log('officeCount:', officeCount);
       console.log('remoteCount:', remoteCount);
+
+      const officeUsersTooltip = records
+        .filter((record) => record.work_style === 'office')
+        .map((record) => record.user_name)
+        .join(', ');
+
+      const remoteUsersTooltip = records
+        .filter((record) => record.work_style === 'remote')
+        .map((record) => record.user_name)
+        .join(', ');
+
+      console.log('officeUsersTooltip:', officeUsersTooltip);
+      console.log('remoteUsersTooltip:', remoteUsersTooltip);
 
       // メッセージを更新
       await client.chat.update({
@@ -168,7 +181,8 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_office',
-                style: workStyle === 'office' ? 'primary' : undefined,
+                value: 'office',
+                description: officeUsersTooltip || 'まだ選択者がいません',
               },
               {
                 type: 'button',
@@ -178,7 +192,8 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_remote',
-                style: workStyle === 'remote' ? 'primary' : undefined,
+                value: 'remote',
+                description: remoteUsersTooltip || 'まだ選択者がいません',
               },
               {
                 type: 'button',
