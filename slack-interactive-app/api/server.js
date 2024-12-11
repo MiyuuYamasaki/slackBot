@@ -295,16 +295,15 @@ app.post('/slack/actions', async (req, res) => {
 
       console.log('Updated record for userId:', userId);
 
-      // メッセージを更新
       await client.chat.update({
         channel: payload.channel.id,
         ts: payload.message.ts,
-        text: messageText, // 元のメッセージを保持
+        text: messageText, // 通常のテキスト
         blocks: [
           {
             type: 'section',
             text: {
-              type: 'mrkdwn',
+              type: 'mrkdwn', // `mrkdwn` を使用してテキストをマークダウン形式にする
               text: messageText,
             },
           },
@@ -315,7 +314,7 @@ app.post('/slack/actions', async (req, res) => {
                 type: 'button',
                 text: {
                   type: 'plain_text',
-                  text: `🏢 本社勤務 (${officeCount})`, //☆
+                  text: `🏢 本社勤務 (${officeCount})`,
                   emoji: true,
                 },
                 action_id: 'button_office',
@@ -328,12 +327,12 @@ app.post('/slack/actions', async (req, res) => {
                 type: 'button',
                 text: {
                   type: 'plain_text',
-                  text: `🏠 在宅勤務 (${remoteCount})`, //☆
+                  text: `🏠 在宅勤務 (${remoteCount})`,
                   emoji: true,
                 },
                 action_id: 'button_remote',
                 style:
-                  existingRecord && existingRecord.workStyle === 'office'
+                  existingRecord && existingRecord.workStyle === 'remote'
                     ? 'primary'
                     : undefined,
               },
@@ -354,12 +353,13 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                style: leaveCheck % 2 === 0 ? 'default' : 'outline',
+                style: leaveCheck % 2 === 0 ? 'default' : 'outline', // leaveCheck に基づいてボタンスタイルを変更
               },
             ],
           },
         ],
       });
+
       console.log('▲ goHome action end');
     }
 
