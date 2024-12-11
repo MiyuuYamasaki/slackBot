@@ -45,8 +45,8 @@ app.post('/slack/actions', async (req, res) => {
     );
 
     if (queryError) {
-      console.error('Query error:', queryError);
-      return;
+      console.error('Error fetching records:', queryError);
+      throw queryError;
     }
 
     if (action === 'button_list') {
@@ -121,10 +121,10 @@ app.post('/slack/actions', async (req, res) => {
 
       // 各勤務場所の人数を集計
       const officeCount = records.filter(
-        (record) => record.workStyle === 'office'
+        (record) => record.work_style === 'office'
       ).length;
       const remoteCount = records.filter(
-        (record) => record.workStyle === 'remote'
+        (record) => record.work_style === 'remote'
       ).length;
 
       console.log('officeCount:', officeCount);
