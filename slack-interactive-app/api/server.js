@@ -318,10 +318,10 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_office',
-                style:
-                  existingRecord && existingRecord.workStyle === 'office'
-                    ? 'primary'
-                    : undefined,
+                // style:
+                //   existingRecord && existingRecord.workStyle === 'office'
+                //     ? 'primary'
+                //     : undefined,
               },
               {
                 type: 'button',
@@ -331,10 +331,10 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_remote',
-                style:
-                  existingRecord && existingRecord.workStyle === 'remote'
-                    ? 'primary'
-                    : undefined,
+                // style:
+                //   existingRecord && existingRecord.workStyle === 'remote'
+                //     ? 'primary'
+                //     : undefined,
               },
               {
                 type: 'button',
@@ -353,7 +353,7 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                style: leaveCheck % 2 === 0 ? 'default' : 'outline', // leaveCheck に基づいてボタンスタイルを変更
+                // style: leaveCheck % 2 === 0 ? 'default' : 'outline', // leaveCheck に基づいてボタンスタイルを変更
               },
             ],
           },
