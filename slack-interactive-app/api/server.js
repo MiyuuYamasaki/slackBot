@@ -49,40 +49,6 @@ app.post('/slack/actions', async (req, res) => {
         console.error('Query error:', queryError);
         return;
       }
-      // データが正常に取得できているか確認する
-      console.log('Records:', records);
-
-      // レコードが空でないことを確認
-      if (!records || records.length === 0) {
-        console.log('No records found');
-      } else {
-        // 取得したデータを確認
-        records.forEach((record) => {
-          console.log(
-            'User:',
-            record.user_name,
-            'Work Style:',
-            record.work_style
-          );
-        });
-      }
-      // データが正常に取得できているか確認する
-      console.log('Records:', records);
-
-      // レコードが空でないことを確認
-      if (!records || records.length === 0) {
-        console.log('No records found');
-      } else {
-        // 取得したデータを確認
-        records.forEach((record) => {
-          console.log(
-            'User:',
-            record.user_name,
-            'Work Style:',
-            record.work_style
-          );
-        });
-      }
 
       // データを分類
       const officeUsers =
@@ -99,12 +65,12 @@ app.post('/slack/actions', async (req, res) => {
 
       const vacationUsers =
         records
-          .filter((record) => record.work_style === null)
+          .filter((record) => record.work_style === '休暇')
           .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
       // メッセージを構築
-      const message = `📋 *${ymdMatch} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${vacationUsers}`;
+      const message = `📋 *${ymd} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${vacationUsers}`;
       await client.chat.postEphemeral({
         channel: payload.channel.id,
         user: payload.user.id,
