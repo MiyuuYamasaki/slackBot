@@ -112,7 +112,7 @@ app.post('/slack/actions', async (req, res) => {
         trigger_id: payload.trigger_id,
         view: modalView,
       });
-      console.log('▼ createList action end');
+      console.log('▲ createList action end');
     }
 
     if (action === 'button_office' || action === 'button_remote') {
@@ -252,39 +252,40 @@ app.post('/slack/actions', async (req, res) => {
           },
         ],
       });
-      console.log('▼ dateSet action end');
+      console.log('▲ dateSet action end');
     }
 
     if (action === 'button_goHome') {
       console.log('▼ goHome action start');
       // 現在の時刻を取得
-      let leaveTime = Date.now();
-      console.log('leaveTime:' + leaveTime);
+      const leaveTime = Math.floor(Date.now() / 1000); // Unixタイムスタンプ（秒単位）
+      console.log('leaveTime:', leaveTime);
 
-      // // Supabaseにデータを保存/更新
-      // const { data: existingRecord, error: fetchError } = await supabase
-      //   .from('Record')
-      //   .select('*')
-      //   .eq('ymd', ymd)
-      //   .eq('user_id', userId)
-      //   .single();
+      // Supabaseにデータを保存/更新
+      const { data: existingRecord, error: fetchError } = await supabase
+        .from('Record')
+        .select('*')
+        .eq('ymd', ymd)
+        .eq('user_id', userId)
+        .single();
 
-      // if (fetchError && fetchError.code !== 'PGRST116') {
-      //   throw fetchError;
-      // }
+      if (fetchError && fetchError.code === 'PGRST116') {
+        console.log('No existing record. No update necessary.');
+        return;
+      } else if (fetchError) {
+        throw fetchError;
+      }
 
-      // if (!existingRecord) {
-      //   console.log('No change necessary. Not yet selected.');
-      // } else {
-      //   const { error: updateError } = await supabase
-      //     .from('Record')
-      //     .update({ leaveTime: leaveTime })
-      //     .eq('id', existingRecord.id);
+      const { error: updateError } = await supabase
+        .from('Record')
+        .update({ leaveTime: leaveTime })
+        .eq('id', existingRecord.id);
 
-      //   if (updateError) throw updateError;
-      //   console.log('Updated record for', userId);
-      // }
-      console.log('▼ goHome action end');
+      if (updateError) throw updateError;
+
+      console.log('Updated record for userId:', userId);
+
+      console.log('▲ goHome action end');
     }
 
     res.status(200).send();
