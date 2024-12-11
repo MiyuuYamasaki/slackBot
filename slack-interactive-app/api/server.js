@@ -69,14 +69,91 @@ app.post('/slack/actions', async (req, res) => {
           .map((record) => `<@${record.user_name}>`)
           .join('\n') || 'なし';
 
-      // メッセージを構築
-      const message = `📋 *${ymd} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${vacationUsers}`;
-      await client.chat.postEphemeral({
-        channel: payload.channel.id,
-        user: payload.user.id,
-        text: message,
+      // モーダルビューの構築
+      const modalView = {
+        type: 'modal',
+        callback_id: 'work_status_modal',
+        title: {
+          type: 'plain_text',
+          text: `${ymd} 勤務状況一覧`,
+        },
+        close: {
+          type: 'plain_text',
+          text: '閉じる',
+        },
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `🏢 *本社勤務:*\n${officeUsers}`,
+            },
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `🏠 *在宅勤務:*\n${remoteUsers}`,
+            },
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `💤 *休暇(回答無):*\n${vacationUsers}`,
+            },
+          },
+        ],
+      };
+
+      // モーダルウィンドウを開く
+      await client.views.open({
+        trigger_id: payload.trigger_id,
+        view: modalView,
       });
     }
+
+    // if (action === 'button_list') {
+    //   // クエリを実行してデータを取得
+    //   const { data: records, error: queryError } = await supabase.rpc(
+    //     'custom_query',
+    //     {
+    //       ymd_param: ymd, // SQLに渡す日付パラメータ
+    //     }
+    //   );
+
+    //   if (queryError) {
+    //     console.error('Error fetching records:', queryError);
+    //     throw queryError;
+    //   }
+
+    //   // データを分類
+    //   const officeUsers =
+    //     records
+    //       .filter((record) => record.work_style === 'office')
+    //       .map((record) => `<@${record.user_name}>`)
+    //       .join('\n') || 'なし';
+
+    //   const remoteUsers =
+    //     records
+    //       .filter((record) => record.work_style === 'remote')
+    //       .map((record) => `<@${record.user_name}>`)
+    //       .join('\n') || 'なし';
+
+    //   const vacationUsers =
+    //     records
+    //       .filter((record) => record.work_style === '休暇')
+    //       .map((record) => `<@${record.user_name}>`)
+    //       .join('\n') || 'なし';
+
+    //   // メッセージを構築
+    //   const message = `📋 *${ymd} の勤務状況一覧*\n\n🏢 *本社勤務:*\n${officeUsers}\n\n🏠 *在宅勤務:*\n${remoteUsers}\n\n💤 *休暇(回答無):*\n${vacationUsers}`;
+    //   await client.chat.postEphemeral({
+    //     channel: payload.channel.id,
+    //     user: payload.user.id,
+    //     text: message,
+    //   });
+    // }
 
     if (action === 'button_office' || action === 'button_remote') {
       let workStyle = null;
