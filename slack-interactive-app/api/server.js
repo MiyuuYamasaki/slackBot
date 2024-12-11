@@ -182,20 +182,6 @@ app.post('/slack/actions', async (req, res) => {
                 },
                 action_id: 'button_office',
                 value: 'office',
-                confirm: {
-                  title: {
-                    type: 'plain_text',
-                    text: '本社勤務者',
-                  },
-                  text: {
-                    type: 'mrkdwn',
-                    text: officeUsersTooltip || 'まだ選択者がいません',
-                  },
-                  confirm: {
-                    type: 'plain_text',
-                    text: '閉じる',
-                  },
-                },
               },
               {
                 type: 'button',
@@ -206,20 +192,6 @@ app.post('/slack/actions', async (req, res) => {
                 },
                 action_id: 'button_remote',
                 value: 'remote',
-                confirm: {
-                  title: {
-                    type: 'plain_text',
-                    text: '在宅勤務者',
-                  },
-                  text: {
-                    type: 'mrkdwn',
-                    text: remoteUsersTooltip || 'まだ選択者がいません',
-                  },
-                  confirm: {
-                    type: 'plain_text',
-                    text: '閉じる',
-                  },
-                },
               },
               {
                 type: 'button',
