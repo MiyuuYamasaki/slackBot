@@ -45,14 +45,44 @@ app.post('/slack/actions', async (req, res) => {
         }
       );
 
-      console.log('ymd_param:' + ymd);
-      console.log('Data:', records);
+      if (queryError) {
+        console.error('Query error:', queryError);
+        return;
+      }
+      // データが正常に取得できているか確認する
+      console.log('Records:', records);
 
-      records.foreach((record) => {
-        console.log(record.workStyle);
-      });
+      // レコードが空でないことを確認
+      if (!records || records.length === 0) {
+        console.log('No records found');
+      } else {
+        // 取得したデータを確認
+        records.forEach((record) => {
+          console.log(
+            'User:',
+            record.user_name,
+            'Work Style:',
+            record.work_style
+          );
+        });
+      }
+      // データが正常に取得できているか確認する
+      console.log('Records:', records);
 
-      if (queryError) throw queryError;
+      // レコードが空でないことを確認
+      if (!records || records.length === 0) {
+        console.log('No records found');
+      } else {
+        // 取得したデータを確認
+        records.forEach((record) => {
+          console.log(
+            'User:',
+            record.user_name,
+            'Work Style:',
+            record.work_style
+          );
+        });
+      }
 
       // データを分類
       const officeUsers =
