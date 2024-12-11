@@ -353,16 +353,12 @@ app.post('/slack/actions', async (req, res) => {
                   emoji: true,
                 },
                 action_id: 'button_goHome',
-                // style: leaveCheck % 2 === 0 ? 'default' : 'outline', // leaveCheck に基づいてボタンスタイルを変更
+                style: leaveCheck % 2 === 0 ? 'default' : 'outline', // leaveCheck に基づいてボタンスタイルを変更
               },
             ],
           },
         ],
       });
-      if (response.error) {
-        console.error('Error:', response.error);
-      }
-
       console.log('▲ goHome action end');
     }
 
