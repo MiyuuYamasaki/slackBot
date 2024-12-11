@@ -272,30 +272,6 @@ app.post('/slack/actions', async (req, res) => {
 
       console.log('Updated record for userId:', userId);
 
-      // クエリを実行してデータを取得
-      const { data: records, error: queryError } = await supabase.rpc(
-        'custom_query',
-        {
-          ymd_param: ymd, // SQLに渡す日付パラメータ
-        }
-      );
-
-      if (queryError) {
-        console.error('Error fetching records:', queryError);
-        throw queryError;
-      }
-
-      // 各勤務場所の人数を集計
-      const officeCount = records.filter(
-        (record) => record.work_style === 'office'
-      ).length;
-      const remoteCount = records.filter(
-        (record) => record.work_style === 'remote'
-      ).length;
-
-      console.log('officeCount:', officeCount);
-      console.log('remoteCount:', remoteCount);
-
       // メッセージを更新
       await client.chat.update({
         channel: payload.channel.id,
@@ -312,26 +288,26 @@ app.post('/slack/actions', async (req, res) => {
           {
             type: 'actions',
             elements: [
-              {
-                type: 'button',
-                text: {
-                  type: 'plain_text',
-                  text: `🏢 本社勤務 (${officeCount})`,
-                  emoji: true,
-                },
-                action_id: 'button_office',
-                style: workStyle === 'office' ? 'primary' : undefined,
-              },
-              {
-                type: 'button',
-                text: {
-                  type: 'plain_text',
-                  text: `🏠 在宅勤務 (${remoteCount})`,
-                  emoji: true,
-                },
-                action_id: 'button_remote',
-                style: workStyle === 'remote' ? 'primary' : undefined,
-              },
+              // {
+              //   type: 'button',
+              //   text: {
+              //     type: 'plain_text',
+              //     text: `🏢 本社勤務 (${officeCount})`,
+              //     emoji: true,
+              //   },
+              //   action_id: 'button_office',
+              //   style: workStyle === 'office' ? 'primary' : undefined,
+              // },
+              // {
+              //   type: 'button',
+              //   text: {
+              //     type: 'plain_text',
+              //     text: `🏠 在宅勤務 (${remoteCount})`,
+              //     emoji: true,
+              //   },
+              //   action_id: 'button_remote',
+              //   style: workStyle === 'remote' ? 'primary' : undefined,
+              // },
               {
                 type: 'button',
                 text: {
