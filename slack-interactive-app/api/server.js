@@ -46,7 +46,7 @@ app.post('/slack/actions', async (req, res) => {
 
     // 当日日付を取得
     const todaysDateString = getTodaysDate();
-    console.log(todaysDateString); // 例: 2024-12-10
+    console.log(todaysDateString + '：' + ymd);
 
     if (action === 'button_list') {
       console.log('▼ createList action start');
@@ -137,7 +137,7 @@ app.post('/slack/actions', async (req, res) => {
             },
           ],
         };
-      } else {
+      } else if (todaysDateString == ymd) {
         modalView = {
           type: 'modal',
           title: {
