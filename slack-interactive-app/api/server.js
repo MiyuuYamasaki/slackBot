@@ -53,7 +53,7 @@ app.post('/slack/actions', async (req, res) => {
 
       let modalView = {};
 
-      if (!todaysDateString === ymd) {
+      if (todaysDateString === ymd) {
         modalView = {
           type: 'modal',
           title: {

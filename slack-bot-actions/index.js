@@ -4,7 +4,7 @@ const { WebClient } = require('@slack/web-api');
 const SLACK_TOKEN = process.env.SLACK_TOKEN;
 const CHANNEL_ID = 'C083QUBKU9L'; // 送信先のチャンネルID
 
-// 日付のフォーマットを変更（例: 2024/12/05(木)）
+// 日付のフォーマットを変更
 function getFormattedDate() {
   const now = new Date();
 
