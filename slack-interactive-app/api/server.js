@@ -57,9 +57,13 @@ app.post('/slack/actions', async (req, res) => {
           view: {
             type: 'modal',
             callback_id: 'add_user_modal',
+            private_metadata: JSON.stringify({
+              channel_id: payload.channel.id,
+              message_ts: payload.container.message_ts,
+            }),
             title: {
               type: 'plain_text',
-              text: 'ユーザー情報を入力してください',
+              text: 'ユーザー情報を入力',
             },
             blocks: [
               {
@@ -68,7 +72,7 @@ app.post('/slack/actions', async (req, res) => {
                 element: {
                   type: 'plain_text_input',
                   action_id: 'user_id_input',
-                  initial_value: extractedUserId, // 初期値として抽出したUserIDを設定
+                  initial_value: extractedUserId,
                   placeholder: {
                     type: 'plain_text',
                     text: 'ユーザーIDを入力',
@@ -228,10 +232,7 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               if (!userDate) {
-                let responseText =
-                  '#' +
-                  userId +
-                  '#さんがUsersテーブルに存在しません。追加しますか？';
+                let responseText = `#${userId}#さんがUsersテーブルに存在しません。追加しますか？`;
                 await client.chat.postMessage({
                   channel: payload.channel.id,
                   thread_ts: payload.message.ts,
@@ -591,7 +592,6 @@ app.post('/slack/actions', async (req, res) => {
           payload.view.state.values.user_id_block.user_id_input.value;
         const userName =
           payload.view.state.values.user_name_block.user_name_input.value;
-        let message = '';
 
         if (!userId || !userName) {
           console.error('UserID or UserName is missing');
@@ -627,15 +627,12 @@ app.post('/slack/actions', async (req, res) => {
 
         console.log(message);
 
-        // メッセージを更新
-        const channelId =
-          payload.channel?.id || // トリガー元のチャンネル ID
-          payload.view.private_metadata?.channel_id || // モーダル送信時の private_metadata に埋め込む
-          null;
-
-        const messageTs =
-          payload.container?.message_ts || // トリガー元のメッセージ TS
-          null;
+        // モーダルを開いた際に保存したチャンネル情報を取得
+        const privateMetadata = JSON.parse(
+          payload.view.private_metadata || '{}'
+        );
+        const channelId = privateMetadata.channel_id;
+        const messageTs = privateMetadata.message_ts;
 
         if (!channelId || !messageTs) {
           console.error('Channel ID or Message TS is missing');
