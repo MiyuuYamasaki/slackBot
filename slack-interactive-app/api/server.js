@@ -33,22 +33,18 @@ app.post('/slack/actions', async (req, res) => {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
     const action = payload.actions[0].action_id;
     const userId = payload.user?.name;
+    let modalView = {};
 
     // ボタンが押されたメッセージのtextを取得
     const messageText = payload.message.text;
     const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
-
-    let modalView = {};
-
     if (!ymdMatch) {
       throw new Error('Date not found in the message text');
     }
-
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
 
     // 当日日付を取得
     const todaysDateString = getTodaysDate();
-    console.log(todaysDateString + '：' + ymd);
 
     // 当日データ以外は参照・変更を行わない。
     if (todaysDateString === ymd) {
@@ -83,7 +79,6 @@ app.post('/slack/actions', async (req, res) => {
             records
               .filter((record) => record.work_style === 'remote')
               .map((record) => {
-                // leaveCheckが奇数の場合に「退勤済」を追加
                 return `<@${record.user_name}>${
                   record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
                 }`;
@@ -94,7 +89,6 @@ app.post('/slack/actions', async (req, res) => {
             records
               .filter((record) => record.work_style === '休暇')
               .map((record) => {
-                // leaveCheckが奇数の場合に「退勤済」を追加
                 return `<@${record.user_name}>${
                   record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
                 }`;
@@ -214,9 +208,6 @@ app.post('/slack/actions', async (req, res) => {
               (record) => record.work_style === 'remote'
             ).length;
 
-            console.log('officeCount:', officeCount);
-            console.log('remoteCount:', remoteCount);
-
             // メッセージを更新
             await client.chat.update({
               channel: payload.channel.id,
@@ -276,6 +267,7 @@ app.post('/slack/actions', async (req, res) => {
               ],
             });
           } else {
+            // モーダルウィンドウの構築
             modalView = {
               type: 'modal',
               title: {
@@ -357,15 +349,16 @@ app.post('/slack/actions', async (req, res) => {
 
           console.log('Updated record for userId:', userId);
 
+          // メッセージの更新
           await client.chat.update({
             channel: payload.channel.id,
             ts: payload.message.ts,
-            text: messageText, // 通常のテキスト
+            text: messageText,
             blocks: [
               {
                 type: 'section',
                 text: {
-                  type: 'mrkdwn', // `mrkdwn` を使用してテキストをマークダウン形式にする
+                  type: 'mrkdwn',
                   text: messageText,
                 },
               },
@@ -427,6 +420,7 @@ app.post('/slack/actions', async (req, res) => {
         }
       }
     } else {
+      // モーダルウィンドウの構築
       modalView = {
         type: 'modal',
         title: {
