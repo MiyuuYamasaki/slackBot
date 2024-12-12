@@ -51,7 +51,7 @@ app.post('/slack/actions', async (req, res) => {
       }
 
       const messageText = payload.message?.text || '';
-      const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
+      const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/) || '';
       // if (!ymdMatch) {
       //   console.error('Date not found in message text:', messageText);
       //   return;
