@@ -19,6 +19,14 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+function getTodaysDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため、+1して0埋め
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // ボタンが押されたときの処理
 app.post('/slack/actions', async (req, res) => {
   try {
@@ -36,91 +44,121 @@ app.post('/slack/actions', async (req, res) => {
 
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
 
+    // 当日日付を取得
+    const todaysDateString = getTodaysDate();
+    console.log(todaysDateString); // 例: 2024-12-10
+
     if (action === 'button_list') {
       console.log('▼ createList action start');
-      // クエリを実行してデータを取得
-      const { data: records, error: queryError } = await supabase.rpc(
-        'custom_query',
-        {
-          ymd_param: ymd, // SQLに渡す日付パラメータ
+
+      const modalView = {};
+
+      if (!todaysDateString != ymd) {
+        // クエリを実行してデータを取得
+        const { data: records, error: queryError } = await supabase.rpc(
+          'custom_query',
+          {
+            ymd_param: ymd, // SQLに渡す日付パラメータ
+          }
+        );
+
+        if (queryError) {
+          console.error('Error fetching records:', queryError);
+          throw queryError;
         }
-      );
 
-      if (queryError) {
-        console.error('Error fetching records:', queryError);
-        throw queryError;
+        // データを分類
+        const officeUsers =
+          records
+            .filter((record) => record.work_style === 'office')
+            .map((record) => {
+              // leaveCheckが奇数の場合に「退勤済」を追加
+              return `<@${record.user_name}>${
+                record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+              }`;
+            })
+            .join('\n') || 'なし';
+
+        const remoteUsers =
+          records
+            .filter((record) => record.work_style === 'remote')
+            .map((record) => {
+              // leaveCheckが奇数の場合に「退勤済」を追加
+              return `<@${record.user_name}>${
+                record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+              }`;
+            })
+            .join('\n') || 'なし';
+
+        const vacationUsers =
+          records
+            .filter((record) => record.work_style === '休暇')
+            .map((record) => {
+              // leaveCheckが奇数の場合に「退勤済」を追加
+              return `<@${record.user_name}>${
+                record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+              }`;
+            })
+            .join('\n') || 'なし';
+
+        // モーダルビューの構築
+        modalView = {
+          type: 'modal',
+          callback_id: 'work_status_modal',
+          title: {
+            type: 'plain_text',
+            text: `${ymd} 勤務状況一覧`,
+          },
+          close: {
+            type: 'plain_text',
+            text: '閉じる',
+          },
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `🏢 *本社勤務:*\n${officeUsers}`,
+              },
+            },
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `🏠 *在宅勤務:*\n${remoteUsers}`,
+              },
+            },
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `💤 *休暇(回答無):*\n${vacationUsers}`,
+              },
+            },
+          ],
+        };
+      } else {
+        modalView = {
+          type: 'modal',
+          title: {
+            type: 'plain_text',
+            text: 'お知らせ',
+          },
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: '当日データ以外参照できません。',
+              },
+            },
+          ],
+          submit: {
+            type: 'plain_text',
+            text: 'OK',
+          },
+        };
       }
-
-      // データを分類
-      const officeUsers =
-        records
-          .filter((record) => record.work_style === 'office')
-          .map((record) => {
-            // leaveCheckが奇数の場合に「退勤済」を追加
-            return `<@${record.user_name}>${
-              record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-            }`;
-          })
-          .join('\n') || 'なし';
-
-      const remoteUsers =
-        records
-          .filter((record) => record.work_style === 'remote')
-          .map((record) => {
-            // leaveCheckが奇数の場合に「退勤済」を追加
-            return `<@${record.user_name}>${
-              record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-            }`;
-          })
-          .join('\n') || 'なし';
-
-      const vacationUsers =
-        records
-          .filter((record) => record.work_style === '休暇')
-          .map((record) => {
-            // leaveCheckが奇数の場合に「退勤済」を追加
-            return `<@${record.user_name}>${
-              record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-            }`;
-          })
-          .join('\n') || 'なし';
-
-      // モーダルビューの構築
-      const modalView = {
-        type: 'modal',
-        callback_id: 'work_status_modal',
-        title: {
-          type: 'plain_text',
-          text: `${ymd} 勤務状況一覧`,
-        },
-        close: {
-          type: 'plain_text',
-          text: '閉じる',
-        },
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `🏢 *本社勤務:*\n${officeUsers}`,
-            },
-          },
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `🏠 *在宅勤務:*\n${remoteUsers}`,
-            },
-          },
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `💤 *休暇(回答無):*\n${vacationUsers}`,
-            },
-          },
-        ],
-      };
 
       // モーダルウィンドウを開く
       await client.views.open({
