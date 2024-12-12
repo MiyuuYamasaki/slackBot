@@ -627,10 +627,25 @@ app.post('/slack/actions', async (req, res) => {
 
         console.log(message);
 
+        // メッセージを更新
+        const channelId =
+          payload.channel?.id || // トリガー元のチャンネル ID
+          payload.view.private_metadata?.channel_id || // モーダル送信時の private_metadata に埋め込む
+          null;
+
+        const messageTs =
+          payload.container?.message_ts || // トリガー元のメッセージ TS
+          null;
+
+        if (!channelId || !messageTs) {
+          console.error('Channel ID or Message TS is missing');
+          return res.status(400).send('Channel or message reference missing');
+        }
+
         //メッセージを更新
         await client.chat.update({
-          channel: payload.container.channel_id,
-          ts: payload.container.message_ts,
+          channel: channelId,
+          ts: messageTs,
           text: message,
           blocks: [
             {
