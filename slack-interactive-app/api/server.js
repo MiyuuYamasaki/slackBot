@@ -148,6 +148,9 @@ app.post('/slack/actions', async (req, res) => {
         throw fetchError;
       }
 
+      // 退勤済みの場合処理を行わない。
+      if (!existingRecord.leaveCheck % 2 === 0) return;
+
       if (!existingRecord) {
         // レコードが存在しない場合はINSERT
         const { error: insertError } = await supabase
@@ -254,6 +257,7 @@ app.post('/slack/actions', async (req, res) => {
           },
         ],
       });
+
       console.log('▲ dateSet action end');
     }
 
