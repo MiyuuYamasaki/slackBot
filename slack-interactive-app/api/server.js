@@ -35,11 +35,8 @@ app.post('/slack/actions', async (req, res) => {
 
     if (payload.actions && payload.actions.length > 0) {
       //アクションを取得
-      const action = payload.actions[0].action_id || payload.view?.callback_id;
+      const action = payload.actions[0].action_id;
 
-      console.log('action:' + action);
-
-      // const callbackId = payload.view?.callback_id;
       const userId = payload.user?.name;
 
       // 内容を取得
@@ -585,7 +582,38 @@ app.post('/slack/actions', async (req, res) => {
         }
       }
     } else {
-      console.error('No actions found in payload:', payload);
+      // コールバックアクション開始
+      const callbackId = payload.view?.callback_id;
+
+      if (callbackId === 'add_user_modal') {
+        // モーダルから入力された値を取得
+        const userId =
+          payload.view.state.values.user_id_block.user_id_input.value;
+        const userName =
+          payload.view.state.values.user_name_block.user_name_input.value;
+
+        if (!userId || !userName) {
+          console.error('UserID or UserName is missing');
+          return res.status(400).send('Invalid input');
+        }
+        console.log('userId:' + userId);
+        console.log('userName:' + userName);
+
+        // Supabaseにデータを追加
+        const { data, error } = await supabase.from('Users').insert([
+          {
+            code: userId, // UserID (例: y-miyu-2429)
+            name: userName, // UserName (例: ミユウ)
+          },
+        ]);
+
+        if (error) {
+          console.error('Error adding user to Users table:', error);
+          return res.status(500).send('Failed to add user');
+        }
+
+        console.log('User added successfully:', data);
+      }
     }
     res.status(200).send();
   } catch (error) {
