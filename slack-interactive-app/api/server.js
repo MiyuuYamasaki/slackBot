@@ -39,20 +39,17 @@ app.post('/slack/actions', async (req, res) => {
           ? payload.actions[0]?.action_id
           : null;
 
-      if (!action) {
-        console.error('Action ID is missing in payload:', payload);
-        return;
-      }
-
-      const userId = payload.user?.name;
-      if (!userId) {
-        console.error('User ID is missing in payload:', payload);
-        return;
-      }
+      // 内容を取得
+      const messageText = payload.message?.text;
 
       // `button_add` のアクションに対応
       if (action === 'button_add') {
         console.log('▼ usersAdd action start');
+
+        // メッセージから #タグ内のUserID を抽出
+        const userIdMatch = messageText.match(/#([^#]+)#/);
+        const extractedUserId = userIdMatch ? userIdMatch[1] : '';
+        console.log('Extracted UserID:', extractedUserId);
 
         // モーダルウィンドウの構築と表示
         await client.views.open({
@@ -62,9 +59,26 @@ app.post('/slack/actions', async (req, res) => {
             callback_id: 'add_user_modal',
             title: {
               type: 'plain_text',
-              text: 'ユーザー追加',
+              text: 'ユーザー情報を入力してください',
             },
             blocks: [
+              {
+                type: 'input',
+                block_id: 'user_id_block',
+                element: {
+                  type: 'plain_text_input',
+                  action_id: 'user_id_input',
+                  initial_value: extractedUserId, // 初期値として抽出したUserIDを設定
+                  placeholder: {
+                    type: 'plain_text',
+                    text: 'ユーザーIDを入力',
+                  },
+                },
+                label: {
+                  type: 'plain_text',
+                  text: 'ユーザーID',
+                },
+              },
               {
                 type: 'input',
                 block_id: 'user_name_block',
@@ -81,22 +95,6 @@ app.post('/slack/actions', async (req, res) => {
                   text: 'ユーザー名',
                 },
               },
-              {
-                type: 'input',
-                block_id: 'user_id_block',
-                element: {
-                  type: 'plain_text_input',
-                  action_id: 'user_id_input',
-                  placeholder: {
-                    type: 'plain_text',
-                    text: 'ユーザーIDを入力',
-                  },
-                },
-                label: {
-                  type: 'plain_text',
-                  text: 'ユーザーID',
-                },
-              },
             ],
             submit: {
               type: 'plain_text',
@@ -107,7 +105,6 @@ app.post('/slack/actions', async (req, res) => {
 
         console.log('▲ usersAdd action end');
       } else {
-        const messageText = payload.message?.text;
         const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
         if (!ymdMatch) {
           console.error('Date not found in message text:', messageText);
@@ -232,7 +229,9 @@ app.post('/slack/actions', async (req, res) => {
 
               if (!userDate) {
                 let responseText =
-                  userId + 'さんがUsersテーブルに存在しません。追加しますか？';
+                  '#' +
+                  userId +
+                  '#さんがUsersテーブルに存在しません。追加しますか？';
                 await client.chat.postMessage({
                   channel: payload.channel.id,
                   thread_ts: payload.message.ts,
