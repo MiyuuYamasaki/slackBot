@@ -625,21 +625,23 @@ app.post('/slack/actions', async (req, res) => {
           message = '#' + userId + '#さんのデータは既に存在しています。';
         }
 
+        console.log(message);
+
         // メッセージを更新
-        await client.chat.update({
-          channel: payload.channel.id,
-          ts: payload.message.ts,
-          text: message,
-          blocks: [
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: message,
-              },
-            },
-          ],
-        });
+        // await client.chat.update({
+        //   channel: payload.channel.id,
+        //   ts: payload.message.ts,
+        //   text: message,
+        //   blocks: [
+        //     {
+        //       type: 'section',
+        //       text: {
+        //         type: 'mrkdwn',
+        //         text: message,
+        //       },
+        //     },
+        //   ],
+        // });
       }
     }
     res.status(200).send();
