@@ -46,6 +46,28 @@ app.post('/slack/actions', async (req, res) => {
     // 当日日付を取得
     const todaysDateString = getTodaysDate();
 
+    // Userが存在するか確認
+    const { data: userDate, error: fetchError } = await supabase
+      .from('Users')
+      .select('*')
+      .eq('code', userId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw fetchError;
+    }
+
+    if (!userDate) {
+      let responseText = 'code:' + userId + 'さんがUsersテーブルに存在しません';
+      await client.chat.postMessage({
+        channel: payload.channel.id,
+        thread_ts: payload.message.ts,
+        text: responseText,
+      });
+    } else {
+      console.log('Hello.' + userDate.name + 'さん');
+    }
+
     // 当日データ以外は参照・変更を行わない。
     if (todaysDateString === ymd) {
       // 一覧ボタンクリック時
