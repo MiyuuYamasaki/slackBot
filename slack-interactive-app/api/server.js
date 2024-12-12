@@ -31,7 +31,7 @@ function getTodaysDate() {
 app.post('/slack/actions', async (req, res) => {
   try {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
-    // console.log('Payload:', JSON.stringify(payload, null, 2)); // デバッグ用
+    console.log('Payload:', JSON.stringify(payload, null, 2)); // デバッグ用
 
     if (payload.actions && payload.actions.length > 0) {
       //アクションを取得
