@@ -59,10 +59,7 @@ app.post('/slack/actions', async (req, res) => {
 
           // クエリを実行してデータを取得
           const { data: records, error: queryError } = await supabase.rpc(
-            'custom_query',
-            {
-              ymd_param: ymd, // SQLに渡す日付パラメータ
-            }
+            'custom_query'
           );
 
           if (queryError) {
@@ -201,10 +198,7 @@ app.post('/slack/actions', async (req, res) => {
 
             // クエリを実行してデータを取得
             const { data: records, error: queryError } = await supabase.rpc(
-              'custom_query',
-              {
-                ymd_param: ymd, // SQLに渡す日付パラメータ
-              }
+              'custom_query'
             );
 
             if (queryError) {
@@ -337,10 +331,7 @@ app.post('/slack/actions', async (req, res) => {
 
           // クエリを実行してデータを取得
           const { data: records, error: queryError } = await supabase.rpc(
-            'custom_query',
-            {
-              ymd_param: ymd, // SQLに渡す日付パラメータ
-            }
+            'custom_query'
           );
 
           if (queryError) {
