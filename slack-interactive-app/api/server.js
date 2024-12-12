@@ -591,28 +591,25 @@ app.post('/slack/actions', async (req, res) => {
           payload.view.state.values.user_id_block.user_id_input.value;
         const userName =
           payload.view.state.values.user_name_block.user_name_input.value;
+        let message = '';
 
         if (!userId || !userName) {
           console.error('UserID or UserName is missing');
           return res.status(400).send('Invalid input');
         }
-        console.log('userId:' + userId);
-        console.log('userName:' + userName);
 
-        const { data: users, error: fetchError } = await supabase
+        const { data: users } = await supabase
           .from('Users')
           .select('*')
           .eq('code', userId)
           .single();
 
-        console.log('users' + users);
-
         if (!users) {
           // Supabaseにデータを追加
-          const { data, error } = await supabase.from('Users').insert([
+          const { error } = await supabase.from('Users').insert([
             {
-              code: userId, // UserID (例: y-miyu-2429)
-              name: userName, // UserName (例: ミユウ)
+              code: userId,
+              name: userName,
             },
           ]);
 
@@ -620,11 +617,29 @@ app.post('/slack/actions', async (req, res) => {
             console.error('Error adding user to Users table:', error);
             return res.status(500).send('Failed to add user');
           }
+          message = userName + 'さんのデータを追加しました！';
 
-          console.log('User added successfully:', data);
+          console.log('User added successfully');
         } else {
-          console.log('データが重複しています。' + fetchError);
+          console.log('データが重複しています。');
+          message = '#' + userId + '#さんのデータは既に存在しています。';
         }
+
+        // メッセージを更新
+        await client.chat.update({
+          channel: payload.channel.id,
+          ts: payload.message.ts,
+          text: message,
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: message,
+              },
+            },
+          ],
+        });
       }
     }
     res.status(200).send();
