@@ -617,31 +617,31 @@ app.post('/slack/actions', async (req, res) => {
             console.error('Error adding user to Users table:', error);
             return res.status(500).send('Failed to add user');
           }
-          message = userName + 'さんのデータを追加しました！';
+          message = `*${userName}* さんのデータを追加しました！`;
 
           console.log('User added successfully');
         } else {
           console.log('データが重複しています。');
-          message = '#' + userId + '#さんのデータは既に存在しています。';
+          message = `*#${userId}#* さんのデータは既に存在しています。`;
         }
 
         console.log(message);
 
-        // メッセージを更新
-        // await client.chat.update({
-        //   channel: payload.channel.id,
-        //   ts: payload.message.ts,
-        //   text: message,
-        //   blocks: [
-        //     {
-        //       type: 'section',
-        //       text: {
-        //         type: 'mrkdwn',
-        //         text: message,
-        //       },
-        //     },
-        //   ],
-        // });
+        //メッセージを更新
+        await client.chat.update({
+          channel: payload.container.channel_id,
+          ts: payload.container.message_ts,
+          text: message,
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: message,
+              },
+            },
+          ],
+        });
       }
     }
     res.status(200).send();
