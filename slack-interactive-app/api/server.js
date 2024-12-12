@@ -226,6 +226,8 @@ app.post('/slack/actions', async (req, res) => {
             throw queryError;
           }
 
+          console.log('date:' + records);
+
           console.log('leave_check:' + records.leave_check);
 
           // 未退勤の場合はメッセージ更新
