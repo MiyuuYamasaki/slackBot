@@ -48,28 +48,6 @@ app.post('/slack/actions', async (req, res) => {
 
     // 当日データ以外は参照・変更を行わない。
     if (todaysDateString === ymd) {
-      // Userが存在するか確認
-      const { data: userDate, error: fetchError } = await supabase
-        .from('Users')
-        .select('*')
-        .eq('code', userId)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
-
-      if (!userDate) {
-        let responseText = userId + 'さんがUsersテーブルに存在しません！';
-        await client.chat.postMessage({
-          channel: payload.channel.id,
-          thread_ts: payload.message.ts,
-          text: responseText,
-        });
-      } else {
-        console.log('Hello.' + userDate.name + 'さん');
-      }
-
       // 一覧ボタンクリック時
       if (action === 'button_list') {
         try {
@@ -169,6 +147,52 @@ app.post('/slack/actions', async (req, res) => {
       if (action === 'button_office' || action === 'button_remote') {
         try {
           console.log('▼ dateSet action start');
+
+          // Userが存在するか確認
+          const { data: userDate, error: Error } = await supabase
+            .from('Users')
+            .select('*')
+            .eq('code', userId)
+            .single();
+
+          if (Error && Error.code !== 'PGRST116') {
+            throw Error;
+          }
+
+          if (!userDate) {
+            let responseText = userId + 'さんがUsersテーブルに存在しません！';
+            await client.chat.postMessage({
+              channel: payload.channel.id,
+              thread_ts: payload.message.ts,
+              text: responseText,
+              blocks: [
+                {
+                  type: 'section',
+                  text: {
+                    type: 'mrkdwn',
+                    text: 'Userを追加しますか？',
+                  },
+                },
+                {
+                  type: 'actions',
+                  elements: [
+                    {
+                      type: 'button',
+                      text: {
+                        type: 'plain_text',
+                        text: '追加',
+                        emoji: true,
+                      },
+                      action_id: 'button_add',
+                      style: 'primary',
+                    },
+                  ],
+                },
+              ],
+            });
+          } else {
+            console.log('Hello.' + userDate.name + 'さん');
+          }
 
           let workStyle = null;
           if (action === 'button_office') workStyle = 'office';
