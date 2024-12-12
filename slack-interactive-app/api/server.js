@@ -46,30 +46,30 @@ app.post('/slack/actions', async (req, res) => {
     // 当日日付を取得
     const todaysDateString = getTodaysDate();
 
-    // Userが存在するか確認
-    const { data: userDate, error: fetchError } = await supabase
-      .from('Users')
-      .select('*')
-      .eq('code', userId)
-      .single();
-
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw fetchError;
-    }
-
-    if (!userDate) {
-      let responseText = 'code:' + userId + 'さんがUsersテーブルに存在しません';
-      await client.chat.postMessage({
-        channel: payload.channel.id,
-        thread_ts: payload.message.ts,
-        text: responseText,
-      });
-    } else {
-      console.log('Hello.' + userDate.name + 'さん');
-    }
-
     // 当日データ以外は参照・変更を行わない。
     if (todaysDateString === ymd) {
+      // Userが存在するか確認
+      const { data: userDate, error: fetchError } = await supabase
+        .from('Users')
+        .select('*')
+        .eq('code', userId)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      if (!userDate) {
+        let responseText = userId + 'さんがUsersテーブルに存在しません！';
+        await client.chat.postMessage({
+          channel: payload.channel.id,
+          thread_ts: payload.message.ts,
+          text: responseText,
+        });
+      } else {
+        console.log('Hello.' + userDate.name + 'さん');
+      }
+
       // 一覧ボタンクリック時
       if (action === 'button_list') {
         try {
@@ -186,8 +186,13 @@ app.post('/slack/actions', async (req, res) => {
             throw fetchError;
           }
 
-          // 退勤済みの場合処理を行わない。
-          if (existingRecord.leaveCheck % 2 === 0) {
+          console.log(existingRecord.leaveCheck);
+
+          // 未退勤、レコードが存在しない場合は更新・作成
+          if (
+            existingRecord.leaveCheck % 2 === 0 ||
+            existingRecord.leaveCheck
+          ) {
             if (!existingRecord) {
               // レコードが存在しない場合はINSERT
               const { error: insertError } = await supabase
