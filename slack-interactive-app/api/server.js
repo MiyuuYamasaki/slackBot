@@ -599,11 +599,13 @@ app.post('/slack/actions', async (req, res) => {
         console.log('userId:' + userId);
         console.log('userName:' + userName);
 
-        const { users, Error } = await supabase
+        const { data: users, error: fetchError } = await supabase
           .from('Users')
           .select('*')
           .eq('code', userId)
           .single();
+
+        console.log('users' + users);
 
         if (!users) {
           // Supabaseにデータを追加
@@ -621,7 +623,7 @@ app.post('/slack/actions', async (req, res) => {
 
           console.log('User added successfully:', data);
         } else {
-          console.log('データが重複しています。' + Error);
+          console.log('データが重複しています。' + fetchError);
         }
       }
     }
