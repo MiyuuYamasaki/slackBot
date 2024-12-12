@@ -200,7 +200,8 @@ app.post('/slack/actions', async (req, res) => {
             // workStyleが異なり、未退勤の場合はUPDATE
             if (
               existingRecord.workStyle !== workStyle &&
-              existingRecord.leaveCheck % 2 === 0
+              (existingRecord.leaveCheck % 2 === 0 ||
+                existingRecord.leaveCheck === 0)
             ) {
               const { error: updateError } = await supabase
                 .from('Record')
