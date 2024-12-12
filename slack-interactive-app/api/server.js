@@ -191,7 +191,7 @@ app.post('/slack/actions', async (req, res) => {
           // 未退勤、レコードが存在しない場合は更新・作成
           if (
             existingRecord.leaveCheck % 2 === 0 ||
-            existingRecord.leaveCheck
+            !existingRecord.leaveCheck
           ) {
             if (!existingRecord) {
               // レコードが存在しない場合はINSERT
