@@ -54,27 +54,6 @@ app.post('/slack/actions', async (req, res) => {
       let modalView = {};
 
       if (todaysDateString === ymd) {
-        modalView = {
-          type: 'modal',
-          title: {
-            type: 'plain_text',
-            text: 'お知らせ',
-          },
-          blocks: [
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: '当日データ以外参照できません。',
-              },
-            },
-          ],
-          submit: {
-            type: 'plain_text',
-            text: 'OK',
-          },
-        };
-      } else {
         // クエリを実行してデータを取得
         const { data: records, error: queryError } = await supabase.rpc(
           'custom_query',
@@ -154,6 +133,23 @@ app.post('/slack/actions', async (req, res) => {
               text: {
                 type: 'mrkdwn',
                 text: `💤 *休暇(回答無):*\n${vacationUsers}`,
+              },
+            },
+          ],
+        };
+      } else {
+        modalView = {
+          type: 'modal',
+          title: {
+            type: 'plain_text',
+            text: 'お知らせ',
+          },
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: '当日データ以外は参照できません。',
               },
             },
           ],
