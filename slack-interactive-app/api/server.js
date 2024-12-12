@@ -46,8 +46,50 @@ app.post('/slack/actions', async (req, res) => {
     // 当日日付を取得
     const todaysDateString = getTodaysDate();
 
-    // 当日データ以外は参照・変更を行わない。
+    // Usersテーブルへユーザーを追加する
+    if (action === 'button_add') {
+      // モーダルウィンドウの構築
+      modalView = {
+        type: 'modal',
+        title: {
+          type: 'plain_text',
+          text: '情報を入力',
+          emoji: true,
+        },
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: 'ユーザー情報を入力してください',
+            },
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: '追加',
+                  emoji: true,
+                },
+                action_id: 'button_add1',
+                style: 'primary',
+              },
+            ],
+          },
+        ],
+      };
+
+      // モーダルウィンドウを開く
+      await client.views.open({
+        trigger_id: payload.trigger_id,
+        view: modalView,
+      });
+    }
     if (todaysDateString === ymd) {
+      // 当日データ以外は参照・変更を行わない。
       // 一覧ボタンクリック時
       if (action === 'button_list') {
         try {
@@ -160,7 +202,8 @@ app.post('/slack/actions', async (req, res) => {
           }
 
           if (!userDate) {
-            let responseText = userId + 'さんがUsersテーブルに存在しません！';
+            let responseText =
+              userId + 'さんがUsersテーブルに存在しません。追加しますか？';
             await client.chat.postMessage({
               channel: payload.channel.id,
               thread_ts: payload.message.ts,
@@ -170,7 +213,7 @@ app.post('/slack/actions', async (req, res) => {
                   type: 'section',
                   text: {
                     type: 'mrkdwn',
-                    text: 'Userを追加しますか？',
+                    text: responseText,
                   },
                 },
                 {
