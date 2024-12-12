@@ -64,22 +64,11 @@ app.post('/slack/actions', async (req, res) => {
               text: 'ユーザー情報を入力してください',
             },
           },
-          {
-            type: 'actions',
-            elements: [
-              {
-                type: 'button',
-                text: {
-                  type: 'plain_text',
-                  text: '追加',
-                  emoji: true,
-                },
-                action_id: 'button_add1',
-                style: 'primary',
-              },
-            ],
-          },
         ],
+        submit: {
+          type: 'plain_text',
+          text: '追加',
+        },
       };
 
       // モーダルウィンドウを開く
