@@ -38,6 +38,8 @@ app.post('/slack/actions', async (req, res) => {
     const messageText = payload.message.text;
     const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
 
+    let modalView = {};
+
     if (!ymdMatch) {
       throw new Error('Date not found in the message text');
     }
@@ -50,8 +52,6 @@ app.post('/slack/actions', async (req, res) => {
 
     if (action === 'button_list') {
       console.log('▼ createList action start');
-
-      let modalView = {};
 
       if (todaysDateString === ymd) {
         // クエリを実行してデータを取得
@@ -166,129 +166,178 @@ app.post('/slack/actions', async (req, res) => {
 
     if (action === 'button_office' || action === 'button_remote') {
       console.log('▼ dateSet action start');
-      let workStyle = null;
-      if (action === 'button_office') workStyle = 'office';
-      if (action === 'button_remote') workStyle = 'remote';
 
-      // Supabaseにデータを保存/更新
-      const { data: existingRecord, error: fetchError } = await supabase
-        .from('Record')
-        .select('*')
-        .eq('ymd', ymd)
-        .eq('user_id', userId)
-        .single();
+      if (todaysDateString === ymd) {
+        let workStyle = null;
+        if (action === 'button_office') workStyle = 'office';
+        if (action === 'button_remote') workStyle = 'remote';
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
+        // Supabaseにデータを保存/更新
+        const { data: existingRecord, error: fetchError } = await supabase
+          .from('Record')
+          .select('*')
+          .eq('ymd', ymd)
+          .eq('user_id', userId)
+          .single();
 
-      // 退勤済みの場合処理を行わない。
-      if (existingRecord.leaveCheck % 2 === 0) {
-        if (!existingRecord) {
-          // レコードが存在しない場合はINSERT
-          const { error: insertError } = await supabase
-            .from('Record')
-            .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          throw fetchError;
+        }
 
-          if (insertError) throw insertError;
-          console.log('Inserted new record for', userId);
-        } else {
-          // 既存のレコードがあり、workStyleが異なる場合はUPDATE
-          if (existingRecord.workStyle !== workStyle) {
-            const { error: updateError } = await supabase
+        // 退勤済みの場合処理を行わない。
+        if (existingRecord.leaveCheck % 2 === 0) {
+          if (!existingRecord) {
+            // レコードが存在しない場合はINSERT
+            const { error: insertError } = await supabase
               .from('Record')
-              .update({ workStyle: workStyle })
-              .eq('id', existingRecord.id);
+              .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
 
-            if (updateError) throw updateError;
-            console.log('Updated record for', userId);
+            if (insertError) throw insertError;
+            console.log('Inserted new record for', userId);
           } else {
-            // 同じworkStyleの場合は変更なし
-            console.log('No change needed, already selected', workStyle);
+            // 既存のレコードがあり、workStyleが異なる場合はUPDATE
+            if (existingRecord.workStyle !== workStyle) {
+              const { error: updateError } = await supabase
+                .from('Record')
+                .update({ workStyle: workStyle })
+                .eq('id', existingRecord.id);
+
+              if (updateError) throw updateError;
+              console.log('Updated record for', userId);
+            } else {
+              // 同じworkStyleの場合は変更なし
+              console.log('No change needed, already selected', workStyle);
+            }
           }
-        }
 
-        // クエリを実行してデータを取得
-        const { data: records, error: queryError } = await supabase.rpc(
-          'custom_query',
-          {
-            ymd_param: ymd, // SQLに渡す日付パラメータ
+          // クエリを実行してデータを取得
+          const { data: records, error: queryError } = await supabase.rpc(
+            'custom_query',
+            {
+              ymd_param: ymd, // SQLに渡す日付パラメータ
+            }
+          );
+
+          if (queryError) {
+            console.error('Error fetching records:', queryError);
+            throw queryError;
           }
-        );
 
-        if (queryError) {
-          console.error('Error fetching records:', queryError);
-          throw queryError;
+          // 各勤務場所の人数を集計
+          const officeCount = records.filter(
+            (record) => record.work_style === 'office'
+          ).length;
+          const remoteCount = records.filter(
+            (record) => record.work_style === 'remote'
+          ).length;
+
+          console.log('officeCount:', officeCount);
+          console.log('remoteCount:', remoteCount);
+
+          // メッセージを更新
+          await client.chat.update({
+            channel: payload.channel.id,
+            ts: payload.message.ts,
+            text: messageText, // 元のメッセージを保持
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: messageText,
+                },
+              },
+              {
+                type: 'actions',
+                elements: [
+                  {
+                    type: 'button',
+                    text: {
+                      type: 'plain_text',
+                      text: `🏢 本社勤務 (${officeCount})`,
+                      emoji: true,
+                    },
+                    action_id: 'button_office',
+                    style: workStyle === 'office' ? 'primary' : undefined,
+                  },
+                  {
+                    type: 'button',
+                    text: {
+                      type: 'plain_text',
+                      text: `🏠 在宅勤務 (${remoteCount})`,
+                      emoji: true,
+                    },
+                    action_id: 'button_remote',
+                    style: workStyle === 'remote' ? 'primary' : undefined,
+                  },
+                  {
+                    type: 'button',
+                    text: {
+                      type: 'plain_text',
+                      text: `📋 一覧`,
+                      emoji: true,
+                    },
+                    action_id: 'button_list',
+                  },
+                  {
+                    type: 'button',
+                    text: {
+                      type: 'plain_text',
+                      text: `👋 退勤`,
+                      emoji: true,
+                    },
+                    action_id: 'button_goHome',
+                  },
+                ],
+              },
+            ],
+          });
+        } else {
+          modalView = {
+            type: 'modal',
+            title: {
+              type: 'plain_text',
+              text: 'エラー',
+            },
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: '既に退勤済みです。',
+                },
+              },
+            ],
+          };
+
+          // モーダルウィンドウを開く
+          await client.views.open({
+            trigger_id: payload.trigger_id,
+            view: modalView,
+          });
         }
-
-        // 各勤務場所の人数を集計
-        const officeCount = records.filter(
-          (record) => record.work_style === 'office'
-        ).length;
-        const remoteCount = records.filter(
-          (record) => record.work_style === 'remote'
-        ).length;
-
-        console.log('officeCount:', officeCount);
-        console.log('remoteCount:', remoteCount);
-
-        // メッセージを更新
-        await client.chat.update({
-          channel: payload.channel.id,
-          ts: payload.message.ts,
-          text: messageText, // 元のメッセージを保持
+      } else {
+        modalView = {
+          type: 'modal',
+          title: {
+            type: 'plain_text',
+            text: 'エラー',
+          },
           blocks: [
             {
               type: 'section',
               text: {
                 type: 'mrkdwn',
-                text: messageText,
+                text: '当日データ以外は変更できません。',
               },
             },
-            {
-              type: 'actions',
-              elements: [
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: `🏢 本社勤務 (${officeCount})`,
-                    emoji: true,
-                  },
-                  action_id: 'button_office',
-                  style: workStyle === 'office' ? 'primary' : undefined,
-                },
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: `🏠 在宅勤務 (${remoteCount})`,
-                    emoji: true,
-                  },
-                  action_id: 'button_remote',
-                  style: workStyle === 'remote' ? 'primary' : undefined,
-                },
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: `📋 一覧`,
-                    emoji: true,
-                  },
-                  action_id: 'button_list',
-                },
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: `👋 退勤`,
-                    emoji: true,
-                  },
-                  action_id: 'button_goHome',
-                },
-              ],
-            },
           ],
+        };
+
+        // モーダルウィンドウを開く
+        await client.views.open({
+          trigger_id: payload.trigger_id,
+          view: modalView,
         });
       }
       console.log('▲ dateSet action end');
