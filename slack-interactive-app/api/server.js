@@ -186,47 +186,47 @@ app.post('/slack/actions', async (req, res) => {
             throw fetchError;
           }
 
-          console.log(existingRecord.leaveCheck);
-
           // 未退勤、レコードが存在しない場合は更新・作成
-          if (
-            existingRecord.leaveCheck % 2 === 0 ||
-            !existingRecord.leaveCheck
-          ) {
-            if (!existingRecord) {
-              // レコードが存在しない場合はINSERT
-              const { error: insertError } = await supabase
+
+          if (!existingRecord) {
+            // レコードが存在しない場合はINSERT
+            const { error: insertError } = await supabase
+              .from('Record')
+              .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
+
+            if (insertError) throw insertError;
+            console.log('Inserted new record for', userId);
+          } else {
+            // workStyleが異なり、未退勤の場合はUPDATE
+            if (
+              existingRecord.workStyle !== workStyle &&
+              existingRecord.leaveCheck % 2 === 0
+            ) {
+              const { error: updateError } = await supabase
                 .from('Record')
-                .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
+                .update({ workStyle: workStyle })
+                .eq('id', existingRecord.id);
 
-              if (insertError) throw insertError;
-              console.log('Inserted new record for', userId);
+              if (updateError) throw updateError;
+              console.log('Updated record for', userId);
             } else {
-              // 既存のレコードがあり、workStyleが異なる場合はUPDATE
-              if (existingRecord.workStyle !== workStyle) {
-                const { error: updateError } = await supabase
-                  .from('Record')
-                  .update({ workStyle: workStyle })
-                  .eq('id', existingRecord.id);
-
-                if (updateError) throw updateError;
-                console.log('Updated record for', userId);
-              } else {
-                // 同じworkStyleの場合は変更なし
-                console.log('No change needed, already selected', workStyle);
-              }
+              // 同じworkStyleの場合は変更なし
+              console.log('No change needed, already selected', workStyle);
             }
+          }
 
-            // クエリを実行してデータを取得
-            const { data: records, error: queryError } = await supabase.rpc(
-              'custom_query'
-            );
+          // クエリを実行して変更後のデータを取得
+          const { data: records, error: queryError } = await supabase.rpc(
+            'custom_query'
+          );
 
-            if (queryError) {
-              console.error('Error fetching records:', queryError);
-              throw queryError;
-            }
+          if (queryError) {
+            console.error('Error fetching records:', queryError);
+            throw queryError;
+          }
 
+          // 未退勤の場合はメッセージ更新
+          if (records.leave_check % 2 === 0) {
             // 各勤務場所の人数を集計
             const officeCount = records.filter(
               (record) => record.work_style === 'office'
