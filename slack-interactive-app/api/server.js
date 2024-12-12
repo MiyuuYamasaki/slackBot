@@ -226,8 +226,10 @@ app.post('/slack/actions', async (req, res) => {
             throw queryError;
           }
 
+          console.log('leave_check:' + records.leave_check);
+
           // 未退勤の場合はメッセージ更新
-          if (records.leave_check % 2 === 0 || records.leaveCheck === 0) {
+          if (records.leave_check % 2 === 0 || records.leave_check === 0) {
             // 各勤務場所の人数を集計
             const officeCount = records.filter(
               (record) => record.work_style === 'office'
