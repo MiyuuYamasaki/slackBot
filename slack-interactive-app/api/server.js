@@ -227,10 +227,7 @@ app.post('/slack/actions', async (req, res) => {
           }
 
           // 未退勤の場合はメッセージ更新
-          if (
-            records.leave_check % 2 === 0 ||
-            existingRecord.leaveCheck === 0
-          ) {
+          if (records.leave_check % 2 === 0 || records.leaveCheck === 0) {
             // 各勤務場所の人数を集計
             const officeCount = records.filter(
               (record) => record.work_style === 'office'
@@ -238,6 +235,8 @@ app.post('/slack/actions', async (req, res) => {
             const remoteCount = records.filter(
               (record) => record.work_style === 'remote'
             ).length;
+
+            console.log('office:remote = ' + officeCount + ':' + remoteCount);
 
             // メッセージを更新
             await client.chat.update({
