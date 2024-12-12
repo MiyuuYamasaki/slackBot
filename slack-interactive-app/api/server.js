@@ -34,10 +34,12 @@ app.post('/slack/actions', async (req, res) => {
     // console.log('Payload:', JSON.stringify(payload, null, 2)); // デバッグ用
 
     if (payload.actions && payload.actions.length > 0) {
-      const action =
-        payload.actions && payload.actions.length > 0
-          ? payload.actions[0]?.action_id
-          : null;
+      //アクションを取得
+      const action = payload.actions[0].action_id || payload.view?.callback_id;
+
+      console.log('action:' + action);
+
+      // const callbackId = payload.view?.callback_id;
       const userId = payload.user?.name;
 
       // 内容を取得
@@ -88,7 +90,7 @@ app.post('/slack/actions', async (req, res) => {
                   action_id: 'user_name_input',
                   placeholder: {
                     type: 'plain_text',
-                    text: 'ユーザー名を入力',
+                    text: 'ユーザー名を入力 例：東京 太郎',
                   },
                 },
                 label: {
