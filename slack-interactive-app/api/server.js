@@ -281,6 +281,30 @@ app.post('/slack/actions', async (req, res) => {
                 },
               ],
             });
+          } else {
+            modalView = {
+              type: 'modal',
+              title: {
+                type: 'plain_text',
+                text: 'エラー 😢',
+                emoji: true,
+              },
+              blocks: [
+                {
+                  type: 'section',
+                  text: {
+                    type: 'mrkdwn',
+                    text: '既に退勤済みです。',
+                  },
+                },
+              ],
+            };
+
+            // モーダルウィンドウを開く
+            await client.views.open({
+              trigger_id: payload.trigger_id,
+              view: modalView,
+            });
           }
 
           console.log('▲ dateSet action end');
@@ -416,14 +440,15 @@ app.post('/slack/actions', async (req, res) => {
         type: 'modal',
         title: {
           type: 'plain_text',
-          text: 'エラー',
+          text: 'エラー 😢',
+          emoji: true,
         },
         blocks: [
           {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: '当日データ以外の参照・変更できません。',
+              text: '当日データ以外の参照・変更はできません。',
             },
           },
         ],
