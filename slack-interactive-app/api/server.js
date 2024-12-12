@@ -38,9 +38,9 @@ app.post('/slack/actions', async (req, res) => {
     // ボタンが押されたメッセージのtextを取得
     const messageText = payload.message.text;
     const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
-    if (!ymdMatch) {
-      throw new Error('Date not found in the message text');
-    }
+    // if (!ymdMatch) {
+    //   throw new Error('Date not found in the message text');
+    // }
     const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
 
     // 当日日付を取得
