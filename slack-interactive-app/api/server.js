@@ -51,7 +51,7 @@ app.post('/slack/actions', async (req, res) => {
     if (action === 'button_list') {
       console.log('▼ createList action start');
 
-      const modalView = {};
+      let modalView = {};
 
       if (!todaysDateString != ymd) {
         // クエリを実行してデータを取得
