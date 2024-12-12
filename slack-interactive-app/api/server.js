@@ -599,20 +599,30 @@ app.post('/slack/actions', async (req, res) => {
         console.log('userId:' + userId);
         console.log('userName:' + userName);
 
-        // Supabaseにデータを追加
-        const { data, error } = await supabase.from('Users').insert([
-          {
-            code: userId, // UserID (例: y-miyu-2429)
-            name: userName, // UserName (例: ミユウ)
-          },
-        ]);
+        const { users, Error } = await supabase
+          .from('Users')
+          .select('*')
+          .eq('code', userId)
+          .single();
 
-        if (error) {
-          console.error('Error adding user to Users table:', error);
-          return res.status(500).send('Failed to add user');
+        if (!users) {
+          // Supabaseにデータを追加
+          const { data, error } = await supabase.from('Users').insert([
+            {
+              code: userId, // UserID (例: y-miyu-2429)
+              name: userName, // UserName (例: ミユウ)
+            },
+          ]);
+
+          if (error) {
+            console.error('Error adding user to Users table:', error);
+            return res.status(500).send('Failed to add user');
+          }
+
+          console.log('User added successfully:', data);
+        } else {
+          console.log('データが重複しています。' + Error);
         }
-
-        console.log('User added successfully:', data);
       }
     }
     res.status(200).send();
