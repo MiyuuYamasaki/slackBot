@@ -49,33 +49,9 @@ app.post('/slack/actions', async (req, res) => {
     // Usersテーブルへユーザーを追加する
     if (action === 'button_add') {
       // モーダルウィンドウの構築
-      modalView = {
-        type: 'modal',
-        title: {
-          type: 'plain_text',
-          text: '情報を入力',
-          emoji: true,
-        },
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: 'ユーザー情報を入力してください',
-            },
-          },
-        ],
-        submit: {
-          type: 'plain_text',
-          text: '追加',
-        },
-      };
+      console.log('▼ usersAdd action start');
 
-      // モーダルウィンドウを開く
-      await client.views.open({
-        trigger_id: payload.trigger_id,
-        view: modalView,
-      });
+      console.log('▲ usersAdd action end');
     }
     if (todaysDateString === ymd) {
       // 当日データ以外は参照・変更を行わない。
