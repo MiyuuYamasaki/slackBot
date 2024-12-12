@@ -31,33 +31,93 @@ function getTodaysDate() {
 app.post('/slack/actions', async (req, res) => {
   try {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
+    console.log('Payload:', JSON.stringify(payload, null, 2)); // デバッグ用
+
     if (payload.actions && payload.actions.length > 0) {
-      // const action = payload.actions[0]; // 安全にアクセス
-      const action = payload.actions ? payload.actions[0]?.action_id : null;
-      // さらに処理を続ける
+      const action =
+        payload.actions && payload.actions.length > 0
+          ? payload.actions[0]?.action_id
+          : null;
 
-      // const action = payload.actions[0].action_id;
+      if (!action) {
+        console.error('Action ID is missing in payload:', payload);
+        return;
+      }
+
       const userId = payload.user?.name;
-      let modalView = {};
+      if (!userId) {
+        console.error('User ID is missing in payload:', payload);
+        return;
+      }
 
-      // ボタンが押されたメッセージのtextを取得
-      const messageText = payload.message.text;
+      const messageText = payload.message?.text || '';
       const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
-      // if (!ymdMatch) {
-      //   throw new Error('Date not found in the message text');
-      // }
-      const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
+      if (!ymdMatch) {
+        console.error('Date not found in message text:', messageText);
+        return;
+      }
 
-      // 当日日付を取得
+      const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
       const todaysDateString = getTodaysDate();
 
-      // Usersテーブルへユーザーを追加する
+      // `button_add` のアクションに対応
       if (action === 'button_add') {
-        // モーダルウィンドウの構築
         console.log('▼ usersAdd action start');
+
+        // モーダルウィンドウの構築と表示
+        await client.views.open({
+          trigger_id: payload.trigger_id,
+          view: {
+            type: 'modal',
+            callback_id: 'add_user_modal',
+            title: {
+              type: 'plain_text',
+              text: 'ユーザー追加',
+            },
+            blocks: [
+              {
+                type: 'input',
+                block_id: 'user_name_block',
+                element: {
+                  type: 'plain_text_input',
+                  action_id: 'user_name_input',
+                  placeholder: {
+                    type: 'plain_text',
+                    text: 'ユーザー名を入力',
+                  },
+                },
+                label: {
+                  type: 'plain_text',
+                  text: 'ユーザー名',
+                },
+              },
+              {
+                type: 'input',
+                block_id: 'user_id_block',
+                element: {
+                  type: 'plain_text_input',
+                  action_id: 'user_id_input',
+                  placeholder: {
+                    type: 'plain_text',
+                    text: 'ユーザーIDを入力',
+                  },
+                },
+                label: {
+                  type: 'plain_text',
+                  text: 'ユーザーID',
+                },
+              },
+            ],
+            submit: {
+              type: 'plain_text',
+              text: '追加',
+            },
+          },
+        });
 
         console.log('▲ usersAdd action end');
       }
+
       if (todaysDateString === ymd) {
         // 当日データ以外は参照・変更を行わない。
         // 一覧ボタンクリック時
