@@ -491,7 +491,7 @@ app.post('/slack/actions', async (req, res) => {
                 const options = {
                   officeCount: officeCount,
                   remoteCount: remoteCount,
-                  existingRecord: { workStyle: workStyle },
+                  existingRecord: { workStyle: existingRecord.workStyle },
                   leaveCheck: leaveCheck,
                 };
 
