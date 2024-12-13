@@ -314,21 +314,18 @@ app.post('/slack/actions', async (req, res) => {
 
               // 未退勤の場合はメッセージ更新
               if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
+                console.log(countDate);
                 // "count_query" の結果データから特定の workStyle のカウントを取得
                 const officeCount =
-                  countDate.find((d) => d.workStyle === 'office')?.countStyle ||
+                  countDate.find((d) => d.workstyle === 'office')?.countstyle ||
                   0;
                 const remoteCount =
-                  countDate.find((d) => d.workStyle === 'remote')?.countStyle ||
+                  countDate.find((d) => d.workstyle === 'remote')?.countstyle ||
                   0;
 
                 // 確認用にコンソール出力
                 console.log(`Office Count: ${officeCount}`);
                 console.log(`Remote Count: ${remoteCount}`);
-
-                console.log(
-                  'office:remote = ' + officeCount + ':' + remoteCount
-                );
 
                 // 関数を呼び出す
                 (async () => {
@@ -343,14 +340,14 @@ app.post('/slack/actions', async (req, res) => {
                   };
 
                   try {
-                    const result = await updateMessage(
+                    await updateMessage(
                       client,
                       channel,
                       ts,
                       messageText,
                       options
                     );
-                    console.log('Message updated successfully:', result);
+                    console.log('Message updated successfully');
                   } catch (error) {
                     console.error('Failed to update message:', error);
                   }
@@ -363,13 +360,8 @@ app.post('/slack/actions', async (req, res) => {
                   const modalText = '既に退勤済みです。';
 
                   try {
-                    const result = await openModal(
-                      client,
-                      triggerId,
-                      modalTitle,
-                      modalText
-                    );
-                    console.log('Modal opened successfully:', result);
+                    await openModal(client, triggerId, modalTitle, modalText);
+                    console.log('Modal opened successfully');
                   } catch (error) {
                     console.error('Failed to open modal:', error);
                   }
@@ -406,11 +398,14 @@ app.post('/slack/actions', async (req, res) => {
 
               // "count_query" の結果データから特定の workStyle のカウントを取得
               const officeCount =
-                countDate.find((d) => d.workStyle === 'office')?.countStyle ||
+                countDate.find((d) => d.workstyle === 'office')?.countstyle ||
                 0;
               const remoteCount =
-                countDate.find((d) => d.workStyle === 'remote')?.countStyle ||
+                countDate.find((d) => d.workstyle === 'remote')?.countstyle ||
                 0;
+
+              console.log(`Office Count: ${officeCount}`);
+              console.log(`Remote Count: ${remoteCount}`);
 
               // 元の数値+1の数値で更新
               let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
@@ -438,14 +433,14 @@ app.post('/slack/actions', async (req, res) => {
                 };
 
                 try {
-                  const result = await updateMessage(
+                  await updateMessage(
                     client,
                     channel,
                     ts,
                     messageText,
                     options
                   );
-                  console.log('Message updated successfully:', result);
+                  console.log('Message updated successfully');
                 } catch (error) {
                   console.error('Failed to update message:', error);
                 }
@@ -464,13 +459,8 @@ app.post('/slack/actions', async (req, res) => {
             const modalText = '当日データ以外の参照・変更はできません。';
 
             try {
-              const result = await openModal(
-                client,
-                triggerId,
-                modalTitle,
-                modalText
-              );
-              console.log('Modal opened successfully:', result);
+              await openModal(client, triggerId, modalTitle, modalText);
+              console.log('Modal opened successfully');
             } catch (error) {
               console.error('Failed to open modal:', error);
             }
