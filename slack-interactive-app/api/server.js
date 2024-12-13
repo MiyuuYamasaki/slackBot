@@ -310,17 +310,21 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               // クエリを実行して変更後のデータを取得
-              const { data: records } = await supabase.rpc('custom_query');
+              const { data: records } = await supabase.rpc('count_query');
 
               // 未退勤の場合はメッセージ更新
               if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
-                // 各勤務場所の人数を集計
-                const officeCount = records.filter(
-                  (record) => record.work_style === 'office'
-                ).length;
-                const remoteCount = records.filter(
-                  (record) => record.work_style === 'remote'
-                ).length;
+                // "count_query" の結果データから特定の workStyle のカウントを取得
+                const officeCount =
+                  records.find((record) => record.workStyle === 'office')
+                    ?.countStyle || 0;
+                const remoteCount =
+                  records.find((record) => record.workStyle === 'remote')
+                    ?.countStyle || 0;
+
+                // 確認用にコンソール出力
+                console.log(`Office Count: ${officeCount}`);
+                console.log(`Remote Count: ${remoteCount}`);
 
                 console.log(
                   'office:remote = ' + officeCount + ':' + remoteCount
@@ -396,16 +400,15 @@ app.post('/slack/actions', async (req, res) => {
                 throw fetchError;
               }
 
-              // クエリを実行してデータを取得
-              const { data: records } = await supabase.rpc('custom_query');
+              const { data: records } = await supabase.rpc('count_query');
 
-              // 各勤務場所の人数を集計
-              const officeCount = records.filter(
-                (record) => record.work_style === 'office'
-              ).length;
-              const remoteCount = records.filter(
-                (record) => record.work_style === 'remote'
-              ).length;
+              // "count_query" の結果データから特定の workStyle のカウントを取得
+              const officeCount =
+                records.find((record) => record.workStyle === 'office')
+                  ?.countStyle || 0;
+              const remoteCount =
+                records.find((record) => record.workStyle === 'remote')
+                  ?.countStyle || 0;
 
               // 元の数値+1の数値で更新
               let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
