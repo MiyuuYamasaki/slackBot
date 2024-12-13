@@ -132,14 +132,7 @@ app.post('/slack/actions', async (req, res) => {
               console.log('▼ createList action start');
 
               // クエリを実行してデータを取得
-              const { data: records, error: queryError } = await supabase.rpc(
-                'custom_query'
-              );
-
-              if (queryError) {
-                console.error('Error fetching records:', queryError);
-                throw queryError;
-              }
+              const { data: records } = await supabase.rpc('custom_query');
 
               // データを分類
               const officeUsers =
@@ -303,8 +296,7 @@ app.post('/slack/actions', async (req, res) => {
                 // workStyleが異なり、未退勤の場合はUPDATE
                 if (
                   existingRecord.workStyle !== workStyle &&
-                  (existingRecord.leaveCheck % 2 === 0 ||
-                    existingRecord.leaveCheck === 0)
+                  existingRecord.leaveCheck % 2 === 0
                 ) {
                   const { error: updateError } = await supabase
                     .from('Record')
@@ -320,21 +312,10 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               // クエリを実行して変更後のデータを取得
-              const { data: records, error: queryError } = await supabase.rpc(
-                'custom_query'
-              );
-
-              if (queryError) {
-                console.error('Error fetching records:', queryError);
-                throw queryError;
-              }
+              const { data: records } = await supabase.rpc('custom_query');
 
               // 未退勤の場合はメッセージ更新
-              if (
-                !existingRecord || // 新規レコード
-                existingRecord.leaveCheck % 2 === 0 ||
-                existingRecord.leaveCheck === 0
-              ) {
+              if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
                 // 各勤務場所の人数を集計
                 const officeCount = records.filter(
                   (record) => record.work_style === 'office'
@@ -372,65 +353,6 @@ app.post('/slack/actions', async (req, res) => {
                     console.error('Failed to update message:', error);
                   }
                 })();
-
-                // メッセージを更新
-                // await client.chat.update({
-                //   channel: payload.channel.id,
-                //   ts: payload.message.ts,
-                //   text: messageText, // 元のメッセージを保持
-                //   blocks: [
-                //     {
-                //       type: 'section',
-                //       text: {
-                //         type: 'mrkdwn',
-                //         text: messageText,
-                //       },
-                //     },
-                //     {
-                //       type: 'actions',
-                //       elements: [
-                //         {
-                //           type: 'button',
-                //           text: {
-                //             type: 'plain_text',
-                //             text: `🏢 本社勤務 (${officeCount})`,
-                //             emoji: true,
-                //           },
-                //           action_id: 'button_office',
-                //           style: workStyle === 'office' ? 'primary' : undefined,
-                //         },
-                //         {
-                //           type: 'button',
-                //           text: {
-                //             type: 'plain_text',
-                //             text: `🏠 在宅勤務 (${remoteCount})`,
-                //             emoji: true,
-                //           },
-                //           action_id: 'button_remote',
-                //           style: workStyle === 'remote' ? 'primary' : undefined,
-                //         },
-                //         {
-                //           type: 'button',
-                //           text: {
-                //             type: 'plain_text',
-                //             text: `📋 一覧`,
-                //             emoji: true,
-                //           },
-                //           action_id: 'button_list',
-                //         },
-                //         {
-                //           type: 'button',
-                //           text: {
-                //             type: 'plain_text',
-                //             text: `👋 退勤`,
-                //             emoji: true,
-                //           },
-                //           action_id: 'button_goHome',
-                //         },
-                //       ],
-                //     },
-                //   ],
-                // });
               } else {
                 // 関数を呼び出してモーダルを開く
                 (async () => {
@@ -479,14 +401,7 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               // クエリを実行してデータを取得
-              const { data: records, error: queryError } = await supabase.rpc(
-                'custom_query'
-              );
-
-              if (queryError) {
-                console.error('Error fetching records:', queryError);
-                throw queryError;
-              }
+              const { data: records } = await supabase.rpc('custom_query');
 
               // 各勤務場所の人数を集計
               const officeCount = records.filter(
@@ -534,73 +449,7 @@ app.post('/slack/actions', async (req, res) => {
                   console.error('Failed to update message:', error);
                 }
               })();
-              // メッセージの更新
-              // await client.chat.update({
-              //   channel: payload.channel.id,
-              //   ts: payload.message.ts,
-              //   text: messageText,
-              //   blocks: [
-              //     {
-              //       type: 'section',
-              //       text: {
-              //         type: 'mrkdwn',
-              //         text: messageText,
-              //       },
-              //     },
-              //     {
-              //       type: 'actions',
-              //       elements: [
-              //         {
-              //           type: 'button',
-              //           text: {
-              //             type: 'plain_text',
-              //             text: `🏢 本社勤務 (${officeCount})`,
-              //             emoji: true,
-              //           },
-              //           action_id: 'button_office',
-              //           style:
-              //             existingRecord &&
-              //             existingRecord.workStyle === 'office'
-              //               ? 'primary'
-              //               : undefined,
-              //         },
-              //         {
-              //           type: 'button',
-              //           text: {
-              //             type: 'plain_text',
-              //             text: `🏠 在宅勤務 (${remoteCount})`,
-              //             emoji: true,
-              //           },
-              //           action_id: 'button_remote',
-              //           style:
-              //             existingRecord &&
-              //             existingRecord.workStyle === 'remote'
-              //               ? 'primary'
-              //               : undefined,
-              //         },
-              //         {
-              //           type: 'button',
-              //           text: {
-              //             type: 'plain_text',
-              //             text: `📋 一覧`,
-              //             emoji: true,
-              //           },
-              //           action_id: 'button_list',
-              //         },
-              //         {
-              //           type: 'button',
-              //           text: {
-              //             type: 'plain_text',
-              //             text: leaveCheck % 2 === 0 ? `👋 退勤` : `✅ 退勤済`,
-              //             emoji: true,
-              //           },
-              //           action_id: 'button_goHome',
-              //           style: leaveCheck % 2 === 0 ? undefined : 'danger',
-              //         },
-              //       ],
-              //     },
-              //   ],
-              // });
+
               console.log('▲ goHome action end');
             } catch (error) {
               console.log(action + '時にエラーが発生しました:' + error);
@@ -672,8 +521,6 @@ app.post('/slack/actions', async (req, res) => {
           message = `*#${userId}#* さんのデータは既に存在しています。`;
         }
 
-        console.log(message);
-
         // モーダルを開いた際に保存したチャンネル情報を取得
         const privateMetadata = JSON.parse(
           payload.view.private_metadata || '{}'
@@ -705,7 +552,9 @@ app.post('/slack/actions', async (req, res) => {
       console.log('▲ add user action end');
       console.log('▲ callback action end');
     }
-    res.status(200).send();
+    res.status(200).send(); // すぐに応答
+    // 非同期で処理を続ける
+    processAction(payload);
   } catch (error) {
     console.error('Error handling action:', error);
     res.status(500).send('Internal Server Error');
