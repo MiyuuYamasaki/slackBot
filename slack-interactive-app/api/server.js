@@ -20,7 +20,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 function getTodaysDate() {
-  const today = new Date();
+  const today = new Date(
+    new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+  );
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため、+1して0埋め
   const day = String(today.getDate()).padStart(2, '0');
