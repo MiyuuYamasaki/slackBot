@@ -347,64 +347,90 @@ app.post('/slack/actions', async (req, res) => {
                   'office:remote = ' + officeCount + ':' + remoteCount
                 );
 
+                // 関数を呼び出す
+                (async () => {
+                  const channel = payload.channel.id;
+                  const ts = payload.message.ts;
+                  const messageText = payload.message?.text;
+                  const options = {
+                    officeCount: officeCount,
+                    remoteCount: remoteCount,
+                    existingRecord: { workStyle: workStyle },
+                    leaveCheck: 0, // 未退勤時のみのアクションのため
+                  };
+
+                  try {
+                    const result = await updateMessage(
+                      client,
+                      channel,
+                      ts,
+                      messageText,
+                      options
+                    );
+                    console.log('Message updated successfully:', result);
+                  } catch (error) {
+                    console.error('Failed to update message:', error);
+                  }
+                })();
+
                 // メッセージを更新
-                await client.chat.update({
-                  channel: payload.channel.id,
-                  ts: payload.message.ts,
-                  text: messageText, // 元のメッセージを保持
-                  blocks: [
-                    {
-                      type: 'section',
-                      text: {
-                        type: 'mrkdwn',
-                        text: messageText,
-                      },
-                    },
-                    {
-                      type: 'actions',
-                      elements: [
-                        {
-                          type: 'button',
-                          text: {
-                            type: 'plain_text',
-                            text: `🏢 本社勤務 (${officeCount})`,
-                            emoji: true,
-                          },
-                          action_id: 'button_office',
-                          style: workStyle === 'office' ? 'primary' : undefined,
-                        },
-                        {
-                          type: 'button',
-                          text: {
-                            type: 'plain_text',
-                            text: `🏠 在宅勤務 (${remoteCount})`,
-                            emoji: true,
-                          },
-                          action_id: 'button_remote',
-                          style: workStyle === 'remote' ? 'primary' : undefined,
-                        },
-                        {
-                          type: 'button',
-                          text: {
-                            type: 'plain_text',
-                            text: `📋 一覧`,
-                            emoji: true,
-                          },
-                          action_id: 'button_list',
-                        },
-                        {
-                          type: 'button',
-                          text: {
-                            type: 'plain_text',
-                            text: `👋 退勤`,
-                            emoji: true,
-                          },
-                          action_id: 'button_goHome',
-                        },
-                      ],
-                    },
-                  ],
-                });
+                // await client.chat.update({
+                //   channel: payload.channel.id,
+                //   ts: payload.message.ts,
+                //   text: messageText, // 元のメッセージを保持
+                //   blocks: [
+                //     {
+                //       type: 'section',
+                //       text: {
+                //         type: 'mrkdwn',
+                //         text: messageText,
+                //       },
+                //     },
+                //     {
+                //       type: 'actions',
+                //       elements: [
+                //         {
+                //           type: 'button',
+                //           text: {
+                //             type: 'plain_text',
+                //             text: `🏢 本社勤務 (${officeCount})`,
+                //             emoji: true,
+                //           },
+                //           action_id: 'button_office',
+                //           style: workStyle === 'office' ? 'primary' : undefined,
+                //         },
+                //         {
+                //           type: 'button',
+                //           text: {
+                //             type: 'plain_text',
+                //             text: `🏠 在宅勤務 (${remoteCount})`,
+                //             emoji: true,
+                //           },
+                //           action_id: 'button_remote',
+                //           style: workStyle === 'remote' ? 'primary' : undefined,
+                //         },
+                //         {
+                //           type: 'button',
+                //           text: {
+                //             type: 'plain_text',
+                //             text: `📋 一覧`,
+                //             emoji: true,
+                //           },
+                //           action_id: 'button_list',
+                //         },
+                //         {
+                //           type: 'button',
+                //           text: {
+                //             type: 'plain_text',
+                //             text: `👋 退勤`,
+                //             emoji: true,
+                //           },
+                //           action_id: 'button_goHome',
+                //         },
+                //       ],
+                //     },
+                //   ],
+                // });
               } else {
                 // 関数を呼び出してモーダルを開く
                 (async () => {
