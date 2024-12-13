@@ -487,7 +487,7 @@ app.post('/slack/actions', async (req, res) => {
               (async () => {
                 const channel = payload.channel.id;
                 const ts = payload.message.ts;
-                const messageText = messageText;
+                const messageText = payload.message?.text;
                 const options = {
                   officeCount: officeCount,
                   remoteCount: remoteCount,
