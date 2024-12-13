@@ -126,8 +126,8 @@ app.post('/slack/actions', async (req, res) => {
 
         // 当日データ以外は参照・変更を行わない。
         if (todaysDateString === ymd) {
-          // 一覧ボタンクリック時
           if (action === 'button_list') {
+            // 一覧ボタンクリック時
             try {
               console.log('▼ createList action start');
 
@@ -212,10 +212,8 @@ app.post('/slack/actions', async (req, res) => {
             } catch (error) {
               console.log(action + '時にエラーが発生しました:' + error);
             }
-          }
-
-          // 本社勤務・在宅勤務ボタンクリック時
-          if (action === 'button_office' || action === 'button_remote') {
+          } else if (action === 'button_office' || action === 'button_remote') {
+            // 本社勤務・在宅勤務ボタンクリック時
             try {
               console.log('▼ dateSet action start');
 
@@ -378,10 +376,8 @@ app.post('/slack/actions', async (req, res) => {
             } catch (error) {
               console.log(action + '時にエラーが発生しました:' + error);
             }
-          }
-
-          // 退勤ボタンクリック時
-          if (action === 'button_goHome') {
+          } else if (action === 'button_goHome') {
+            // 退勤ボタンクリック時
             try {
               console.log('▼ goHome action start');
 
