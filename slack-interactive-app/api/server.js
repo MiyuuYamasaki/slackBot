@@ -552,9 +552,7 @@ app.post('/slack/actions', async (req, res) => {
       console.log('▲ add user action end');
       console.log('▲ callback action end');
     }
-    res.status(200).send(); // すぐに応答
-    // 非同期で処理を続ける
-    processAction(payload);
+    res.status(200).send();
   } catch (error) {
     console.error('Error handling action:', error);
     res.status(500).send('Internal Server Error');
