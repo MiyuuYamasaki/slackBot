@@ -310,17 +310,17 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               // クエリを実行して変更後のデータを取得
-              const { data: records } = await supabase.rpc('count_query');
+              const { data: countDate } = await supabase.rpc('count_query');
 
               // 未退勤の場合はメッセージ更新
               if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
                 // "count_query" の結果データから特定の workStyle のカウントを取得
                 const officeCount =
-                  records.find((record) => record.workStyle === 'office')
-                    ?.countStyle || 0;
+                  countDate.find((d) => d.workStyle === 'office')?.countStyle ||
+                  0;
                 const remoteCount =
-                  records.find((record) => record.workStyle === 'remote')
-                    ?.countStyle || 0;
+                  countDate.find((d) => d.workStyle === 'remote')?.countStyle ||
+                  0;
 
                 // 確認用にコンソール出力
                 console.log(`Office Count: ${officeCount}`);
@@ -400,15 +400,17 @@ app.post('/slack/actions', async (req, res) => {
                 throw fetchError;
               }
 
-              const { data: records } = await supabase.rpc('count_query');
+              const { data: countDate } = await supabase.rpc('count_query');
+
+              console.log(countDate);
 
               // "count_query" の結果データから特定の workStyle のカウントを取得
               const officeCount =
-                records.find((record) => record.workStyle === 'office')
-                  ?.countStyle || 0;
+                countDate.find((d) => d.workStyle === 'office')?.countStyle ||
+                0;
               const remoteCount =
-                records.find((record) => record.workStyle === 'remote')
-                  ?.countStyle || 0;
+                countDate.find((d) => d.workStyle === 'remote')?.countStyle ||
+                0;
 
               // 元の数値+1の数値で更新
               let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
