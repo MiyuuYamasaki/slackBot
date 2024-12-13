@@ -8,7 +8,7 @@ const CHANNEL_ID = 'C083QUBKU9L'; // 送信先のチャンネルID
 function getFormattedDate() {
   // タイムゾーンを日本時間（UTC+9）に固定
   const today = new Date(
-    new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+    new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) // export
   );
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため、+1して0埋め
