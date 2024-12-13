@@ -2,6 +2,7 @@ const express = require('express');
 const { WebClient } = require('@slack/web-api');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
+const { openModal } = require('./slackFunctions');
 
 // 環境変数の設定
 const SLACK_TOKEN = process.env.SLACK_TOKEN;
@@ -405,29 +406,48 @@ app.post('/slack/actions', async (req, res) => {
                 });
               } else {
                 // モーダルウィンドウの構築
-                modalView = {
-                  type: 'modal',
-                  title: {
-                    type: 'plain_text',
-                    text: 'エラー 😢',
-                    emoji: true,
-                  },
-                  blocks: [
-                    {
-                      type: 'section',
-                      text: {
-                        type: 'mrkdwn',
-                        text: '既に退勤済みです。',
-                      },
-                    },
-                  ],
-                };
 
-                // モーダルウィンドウを開く
-                await client.views.open({
-                  trigger_id: payload.trigger_id,
-                  view: modalView,
-                });
+                // 関数を呼び出してモーダルを開く
+                (async () => {
+                  const triggerId = payload.trigger_id;
+                  const modalTitle = 'エラー 😢';
+                  const modalText = '既に退勤済みです。';
+
+                  try {
+                    const result = await openModal(
+                      client,
+                      triggerId,
+                      modalTitle,
+                      modalText
+                    );
+                    console.log('Modal opened successfully:', result);
+                  } catch (error) {
+                    console.error('Failed to open modal:', error);
+                  }
+                })();
+                // modalView = {
+                //   type: 'modal',
+                //   title: {
+                //     type: 'plain_text',
+                //     text: 'エラー 😢',
+                //     emoji: true,
+                //   },
+                //   blocks: [
+                //     {
+                //       type: 'section',
+                //       text: {
+                //         type: 'mrkdwn',
+                //         text: '既に退勤済みです。',
+                //       },
+                //     },
+                //   ],
+                // };
+
+                // // モーダルウィンドウを開く
+                // await client.views.open({
+                //   trigger_id: payload.trigger_id,
+                //   view: modalView,
+                // });
               }
 
               console.log('▲ dateSet action end');
