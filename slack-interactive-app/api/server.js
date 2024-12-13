@@ -20,12 +20,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 function getTodaysDate() {
-  const today = new Date(
-    new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
-  );
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため、+1して0埋め
-  const day = String(today.getDate()).padStart(2, '0');
+  const now = new Date();
+
+  // 日本時間に合わせる（UTC + 9 時間）
+  now.setHours(now.getHours() + 9);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため、+1して0埋め
+  const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 

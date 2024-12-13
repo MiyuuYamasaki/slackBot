@@ -6,13 +6,14 @@ const CHANNEL_ID = 'C083QUBKU9L'; // 送信先のチャンネルID
 
 // 日付のフォーマットを変更
 function getFormattedDate() {
-  // タイムゾーンを日本時間（UTC+9）に固定
-  const today = new Date(
-    new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) // export
-  );
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため、+1して0埋め
-  const day = String(today.getDate()).padStart(2, '0');
+  const now = new Date();
+
+  // 日本時間に合わせる（UTC + 9 時間）
+  now.setHours(now.getHours() + 9);
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // 月は0から始まるので+1
+  const day = String(now.getDate()).padStart(2, '0');
 
   // 曜日を取得（日本語）
   const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
