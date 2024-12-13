@@ -39,12 +39,12 @@ async function openModal(client, triggerId, modalTitle, modalText) {
 
 module.exports = { openModal };
 
-// slackFunctions.js
-
 /**
  * Slackメッセージを更新する関数
+ * @param {Object} client - Slack WebClientインスタンス
  * @param {string} channel - チャンネルID
  * @param {string} ts - メッセージのタイムスタンプ
+ * @param {string} messageText - メッセージ本文
  * @param {Object} options - メッセージ更新用オプション
  * @param {number} options.officeCount - 本社勤務のカウント
  * @param {number} options.remoteCount - 在宅勤務のカウント
