@@ -235,7 +235,7 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               if (!userDate) {
-                let responseText = `*#${userId}#*さんがUsersテーブルに存在しません。追加しますか？`;
+                let responseText = `#${userId}#さんがUsersテーブルに存在しません。追加しますか？`;
                 await client.chat.postMessage({
                   channel: payload.channel.id,
                   thread_ts: payload.message.ts,
