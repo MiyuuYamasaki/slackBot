@@ -2,8 +2,8 @@ const express = require('express');
 const { WebClient } = require('@slack/web-api');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
-const { openModal } = require('./slackFunctions');
-const { updateMessageWithButtons } = require('./slackFunctions');
+const { openModal } = require('./openModal');
+const { updateMessage } = require('./updateMessage');
 
 // 環境変数の設定
 const SLACK_TOKEN = process.env.SLACK_TOKEN;
@@ -496,7 +496,7 @@ app.post('/slack/actions', async (req, res) => {
                 };
 
                 try {
-                  const result = await updateMessageWithButtons(
+                  const result = await updateMessage(
                     client,
                     channel,
                     ts,
