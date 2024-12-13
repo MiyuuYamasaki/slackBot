@@ -3,6 +3,7 @@ const { WebClient } = require('@slack/web-api');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
 const { openModal } = require('./slackFunctions');
+const { updateMessageWithButtons } = require('./slackFunctions');
 
 // 環境変数の設定
 const SLACK_TOKEN = process.env.SLACK_TOKEN;
@@ -482,73 +483,98 @@ app.post('/slack/actions', async (req, res) => {
 
               console.log('Updated record for userId:', userId);
 
+              // 関数を呼び出す
+              (async () => {
+                const channel = payload.channel.id;
+                const ts = payload.message.ts;
+                const messageText = messageText;
+                const options = {
+                  officeCount: officeCount,
+                  remoteCount: remoteCount,
+                  existingRecord: { workStyle: workStyle },
+                  leaveCheck: leaveCheck,
+                };
+
+                try {
+                  const result = await updateMessageWithButtons(
+                    client,
+                    channel,
+                    ts,
+                    messageText,
+                    options
+                  );
+                  console.log('Message updated successfully:', result);
+                } catch (error) {
+                  console.error('Failed to update message:', error);
+                }
+              })();
               // メッセージの更新
-              await client.chat.update({
-                channel: payload.channel.id,
-                ts: payload.message.ts,
-                text: messageText,
-                blocks: [
-                  {
-                    type: 'section',
-                    text: {
-                      type: 'mrkdwn',
-                      text: messageText,
-                    },
-                  },
-                  {
-                    type: 'actions',
-                    elements: [
-                      {
-                        type: 'button',
-                        text: {
-                          type: 'plain_text',
-                          text: `🏢 本社勤務 (${officeCount})`,
-                          emoji: true,
-                        },
-                        action_id: 'button_office',
-                        style:
-                          existingRecord &&
-                          existingRecord.workStyle === 'office'
-                            ? 'primary'
-                            : undefined,
-                      },
-                      {
-                        type: 'button',
-                        text: {
-                          type: 'plain_text',
-                          text: `🏠 在宅勤務 (${remoteCount})`,
-                          emoji: true,
-                        },
-                        action_id: 'button_remote',
-                        style:
-                          existingRecord &&
-                          existingRecord.workStyle === 'remote'
-                            ? 'primary'
-                            : undefined,
-                      },
-                      {
-                        type: 'button',
-                        text: {
-                          type: 'plain_text',
-                          text: `📋 一覧`,
-                          emoji: true,
-                        },
-                        action_id: 'button_list',
-                      },
-                      {
-                        type: 'button',
-                        text: {
-                          type: 'plain_text',
-                          text: leaveCheck % 2 === 0 ? `👋 退勤` : `✅ 退勤済`,
-                          emoji: true,
-                        },
-                        action_id: 'button_goHome',
-                        style: leaveCheck % 2 === 0 ? undefined : 'danger',
-                      },
-                    ],
-                  },
-                ],
-              });
+              // await client.chat.update({
+              //   channel: payload.channel.id,
+              //   ts: payload.message.ts,
+              //   text: messageText,
+              //   blocks: [
+              //     {
+              //       type: 'section',
+              //       text: {
+              //         type: 'mrkdwn',
+              //         text: messageText,
+              //       },
+              //     },
+              //     {
+              //       type: 'actions',
+              //       elements: [
+              //         {
+              //           type: 'button',
+              //           text: {
+              //             type: 'plain_text',
+              //             text: `🏢 本社勤務 (${officeCount})`,
+              //             emoji: true,
+              //           },
+              //           action_id: 'button_office',
+              //           style:
+              //             existingRecord &&
+              //             existingRecord.workStyle === 'office'
+              //               ? 'primary'
+              //               : undefined,
+              //         },
+              //         {
+              //           type: 'button',
+              //           text: {
+              //             type: 'plain_text',
+              //             text: `🏠 在宅勤務 (${remoteCount})`,
+              //             emoji: true,
+              //           },
+              //           action_id: 'button_remote',
+              //           style:
+              //             existingRecord &&
+              //             existingRecord.workStyle === 'remote'
+              //               ? 'primary'
+              //               : undefined,
+              //         },
+              //         {
+              //           type: 'button',
+              //           text: {
+              //             type: 'plain_text',
+              //             text: `📋 一覧`,
+              //             emoji: true,
+              //           },
+              //           action_id: 'button_list',
+              //         },
+              //         {
+              //           type: 'button',
+              //           text: {
+              //             type: 'plain_text',
+              //             text: leaveCheck % 2 === 0 ? `👋 退勤` : `✅ 退勤済`,
+              //             emoji: true,
+              //           },
+              //           action_id: 'button_goHome',
+              //           style: leaveCheck % 2 === 0 ? undefined : 'danger',
+              //         },
+              //       ],
+              //     },
+              //   ],
+              // });
               console.log('▲ goHome action end');
             } catch (error) {
               console.log(action + '時にエラーが発生しました:' + error);
@@ -573,30 +599,6 @@ app.post('/slack/actions', async (req, res) => {
               console.error('Failed to open modal:', error);
             }
           })();
-          // // モーダルウィンドウの構築
-          // modalView = {
-          //   type: 'modal',
-          //   title: {
-          //     type: 'plain_text',
-          //     text: 'エラー 😢',
-          //     emoji: true,
-          //   },
-          //   blocks: [
-          //     {
-          //       type: 'section',
-          //       text: {
-          //         type: 'mrkdwn',
-          //         text: '当日データ以外の参照・変更はできません。',
-          //       },
-          //     },
-          //   ],
-          // };
-
-          // // モーダルウィンドウを開く
-          // await client.views.open({
-          //   trigger_id: payload.trigger_id,
-          //   view: modalView,
-          // });
         }
       }
     } else {
@@ -636,11 +638,11 @@ app.post('/slack/actions', async (req, res) => {
             console.error('Error adding user to Users table:', error);
             return res.status(500).send('Failed to add user');
           }
+
           message = `*${userName}* さんのデータを追加しました！`;
 
           console.log('User added successfully');
         } else {
-          console.log('データが重複しています。');
           message = `*#${userId}#* さんのデータは既に存在しています。`;
         }
 
