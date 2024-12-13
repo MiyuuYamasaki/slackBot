@@ -218,15 +218,11 @@ app.post('/slack/actions', async (req, res) => {
               console.log('▼ dateSet action start');
 
               // Userが存在するか確認
-              const { data: userDate, error: Error } = await supabase
+              const { data: userDate } = await supabase
                 .from('Users')
                 .select('*')
                 .eq('code', userId)
                 .single();
-
-              if (Error && Error.code !== 'PGRST116') {
-                throw Error;
-              }
 
               // Userが存在しない場合、User追加を促すボタン付きスレッドメッセージを送信
               if (!userDate) {
@@ -261,14 +257,10 @@ app.post('/slack/actions', async (req, res) => {
                     },
                   ],
                 });
-              } else {
-                console.log('Hello.' + userDate.name + 'さん');
               }
 
               // 選択した勤務体系を取得
-              let workStyle = null;
-              if (action === 'button_office') workStyle = 'office';
-              if (action === 'button_remote') workStyle = 'remote';
+              let workStyle = action === 'button_office' ? 'office' : 'remote';
 
               // Record テーブルにデータを保存/更新
               const { data: existingRecord, error: fetchError } = await supabase
@@ -290,42 +282,30 @@ app.post('/slack/actions', async (req, res) => {
 
                 if (insertError) throw insertError;
                 console.log('Inserted new record for', userId);
-              } else {
+              } else if (
+                existingRecord.workStyle !== workStyle &&
+                existingRecord.leaveCheck % 2 === 0
+              ) {
                 // workStyleが異なり、未退勤の場合はUPDATE
-                if (
-                  existingRecord.workStyle !== workStyle &&
-                  existingRecord.leaveCheck % 2 === 0
-                ) {
-                  const { error: updateError } = await supabase
-                    .from('Record')
-                    .update({ workStyle: workStyle })
-                    .eq('id', existingRecord.id);
+                const { error: updateError } = await supabase
+                  .from('Record')
+                  .update({ workStyle: workStyle })
+                  .eq('id', existingRecord.id);
 
-                  if (updateError) throw updateError;
-                  console.log('Updated record for', userId);
-                } else {
-                  // 同じworkStyleの場合は変更なし
-                  console.log('No change needed, already selected', workStyle);
-                }
+                if (updateError) throw updateError;
+                console.log('Updated record for', userId);
               }
 
-              // クエリを実行して変更後のデータを取得
-              const { data: countDate } = await supabase.rpc('count_query');
-
-              // 未退勤の場合はメッセージ更新
+              // 新規/未退勤の場合はメッセージ更新
               if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
-                console.log(countDate);
                 // "count_query" の結果データから特定の workStyle のカウントを取得
+                const { data: countDate } = await supabase.rpc('count_query');
                 const officeCount =
                   countDate.find((d) => d.workstyle === 'office')?.countstyle ||
                   0;
                 const remoteCount =
                   countDate.find((d) => d.workstyle === 'remote')?.countstyle ||
                   0;
-
-                // 確認用にコンソール出力
-                console.log(`Office Count: ${officeCount}`);
-                console.log(`Remote Count: ${remoteCount}`);
 
                 // 関数を呼び出す
                 (async () => {
@@ -377,35 +357,22 @@ app.post('/slack/actions', async (req, res) => {
             try {
               console.log('▼ goHome action start');
 
-              // Recordテーブルのデータを更新
-              const { data: existingRecord, error: fetchError } = await supabase
+              // Recordテーブルのデータを取得
+              const { data: existingRecord } = await supabase
                 .from('Record')
                 .select('*')
                 .eq('ymd', ymd)
                 .eq('user_id', userId)
                 .single();
 
-              if (fetchError && fetchError.code === 'PGRST116') {
-                console.log('No existing record. No update necessary.');
-                return;
-              } else if (fetchError) {
-                throw fetchError;
-              }
-
-              const { data: countDate } = await supabase.rpc('count_query');
-
-              console.log(countDate);
-
               // "count_query" の結果データから特定の workStyle のカウントを取得
+              const { data: countDate } = await supabase.rpc('count_query');
               const officeCount =
                 countDate.find((d) => d.workstyle === 'office')?.countstyle ||
                 0;
               const remoteCount =
                 countDate.find((d) => d.workstyle === 'remote')?.countstyle ||
                 0;
-
-              console.log(`Office Count: ${officeCount}`);
-              console.log(`Remote Count: ${remoteCount}`);
 
               // 元の数値+1の数値で更新
               let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
