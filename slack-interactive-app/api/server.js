@@ -327,7 +327,6 @@ app.post('/slack/actions', async (req, res) => {
                       messageText,
                       options
                     );
-                    console.log('Message updated successfully');
                   } catch (error) {
                     console.error('Failed to update message:', error);
                   }
@@ -341,7 +340,6 @@ app.post('/slack/actions', async (req, res) => {
 
                   try {
                     await openModal(client, triggerId, modalTitle, modalText);
-                    console.log('Modal opened successfully');
                   } catch (error) {
                     console.error('Failed to open modal:', error);
                   }
@@ -407,7 +405,6 @@ app.post('/slack/actions', async (req, res) => {
                     messageText,
                     options
                   );
-                  console.log('Message updated successfully');
                 } catch (error) {
                   console.error('Failed to update message:', error);
                 }
@@ -427,7 +424,6 @@ app.post('/slack/actions', async (req, res) => {
 
             try {
               await openModal(client, triggerId, modalTitle, modalText);
-              console.log('Modal opened successfully');
             } catch (error) {
               console.error('Failed to open modal:', error);
             }
