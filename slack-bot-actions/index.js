@@ -28,7 +28,7 @@ const client = new WebClient(SLACK_TOKEN);
 // ボタン付きメッセージ
 async function sendInteractiveMessage() {
   try {
-    const formattedDate = getFormattedDate(); // 当日の日付を取得
+    const formattedDate = getFormattedDate();
     const result = await client.chat.postMessage({
       channel: CHANNEL_ID,
       text: `業務連絡スレッド ${formattedDate}`,

@@ -2,15 +2,16 @@ const express = require('express');
 const { WebClient } = require('@slack/web-api');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
+const { openModal } = require('./slackFunctions');
 
 // 環境変数の設定
 const SLACK_TOKEN = process.env.SLACK_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY; // anon key
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 // クライアントの初期化
 const client = new WebClient(SLACK_TOKEN);
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // anon keyを使用
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Expressサーバーのセットアップ
 const app = express();
@@ -19,11 +20,13 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// 当日日付取得用の関数
 function getTodaysDate() {
   const now = new Date();
 
   // 日本時間に合わせる（UTC + 9 時間）
   now.setHours(now.getHours() + 9);
+
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため、+1して0埋め
   const day = String(now.getDate()).padStart(2, '0');
@@ -35,28 +38,24 @@ app.post('/slack/actions', async (req, res) => {
   try {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
 
-    // デバッグ用 ： Payload内容確認時はコメントアウト外してください。
+    //// デバッグ用 ： Payload内容確認時は下記コメントアウト外してください。
     // console.log('Payload:', JSON.stringify(payload, null, 2));
 
     if (payload.actions && payload.actions.length > 0) {
-      //アクションを取得
+      // 必要情報を取得
       const action = payload.actions[0].action_id;
-
       const userId = payload.user?.name;
-
-      // 内容を取得
       const messageText = payload.message?.text;
 
-      // `button_add` のアクションに対応
+      // User追加（スレッド）ボタン押下時
       if (action === 'button_add') {
         console.log('▼ usersAdd action start');
 
         // メッセージから #タグ内のUserID を抽出
         const userIdMatch = messageText.match(/#([^#]+)#/);
         const extractedUserId = userIdMatch ? userIdMatch[1] : '';
-        console.log('Extracted UserID:', extractedUserId);
 
-        // モーダルウィンドウの構築と表示
+        // ユーザー情報を入力させるモーダルウィンドウの構築と表示
         await client.views.open({
           trigger_id: payload.trigger_id,
           view: {
@@ -77,7 +76,7 @@ app.post('/slack/actions', async (req, res) => {
                 element: {
                   type: 'plain_text_input',
                   action_id: 'user_id_input',
-                  initial_value: extractedUserId,
+                  initial_value: extractedUserId, // 初期値
                   placeholder: {
                     type: 'plain_text',
                     text: 'ユーザーIDを入力',
@@ -114,6 +113,7 @@ app.post('/slack/actions', async (req, res) => {
 
         console.log('▲ usersAdd action end');
       } else {
+        // メインメッセージから日付を取得
         const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
         if (!ymdMatch) {
           console.error('Date not found in message text:', messageText);
@@ -121,10 +121,10 @@ app.post('/slack/actions', async (req, res) => {
         }
 
         const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
-        const todaysDateString = getTodaysDate();
+        const todaysDateString = getTodaysDate(); // 現在の日付を取得
 
+        // 当日データ以外は参照・変更を行わない。
         if (todaysDateString === ymd) {
-          // 当日データ以外は参照・変更を行わない。
           // 一覧ボタンクリック時
           if (action === 'button_list') {
             try {
@@ -172,7 +172,7 @@ app.post('/slack/actions', async (req, res) => {
                   })
                   .join('\n') || 'なし';
 
-              // モーダルビューの構築
+              // 一覧表示のモーダルウィンドウを作成
               modalView = {
                 type: 'modal',
                 callback_id: 'work_status_modal',
@@ -236,8 +236,8 @@ app.post('/slack/actions', async (req, res) => {
                 throw Error;
               }
 
+              // Userが存在しない場合、User追加を促すボタン付きスレッドメッセージを送信
               if (!userDate) {
-                // UserIDを太字にする
                 let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
 
                 await client.chat.postMessage({
@@ -273,11 +273,12 @@ app.post('/slack/actions', async (req, res) => {
                 console.log('Hello.' + userDate.name + 'さん');
               }
 
+              // 選択した勤務体系を取得
               let workStyle = null;
               if (action === 'button_office') workStyle = 'office';
               if (action === 'button_remote') workStyle = 'remote';
 
-              // Supabaseにデータを保存/更新
+              // Record テーブルにデータを保存/更新
               const { data: existingRecord, error: fetchError } = await supabase
                 .from('Record')
                 .select('*')
@@ -288,8 +289,6 @@ app.post('/slack/actions', async (req, res) => {
               if (fetchError && fetchError.code !== 'PGRST116') {
                 throw fetchError;
               }
-
-              // 未退勤、レコードが存在しない場合は更新・作成
 
               if (!existingRecord) {
                 // レコードが存在しない場合はINSERT
@@ -328,8 +327,6 @@ app.post('/slack/actions', async (req, res) => {
                 console.error('Error fetching records:', queryError);
                 throw queryError;
               }
-
-              console.log('leave_check:' + existingRecord.leaveCheck);
 
               // 未退勤の場合はメッセージ更新
               if (
@@ -409,29 +406,48 @@ app.post('/slack/actions', async (req, res) => {
                 });
               } else {
                 // モーダルウィンドウの構築
-                modalView = {
-                  type: 'modal',
-                  title: {
-                    type: 'plain_text',
-                    text: 'エラー 😢',
-                    emoji: true,
-                  },
-                  blocks: [
-                    {
-                      type: 'section',
-                      text: {
-                        type: 'mrkdwn',
-                        text: '既に退勤済みです。',
-                      },
-                    },
-                  ],
-                };
 
-                // モーダルウィンドウを開く
-                await client.views.open({
-                  trigger_id: payload.trigger_id,
-                  view: modalView,
-                });
+                // 関数を呼び出してモーダルを開く
+                (async () => {
+                  const triggerId = 'already_clocked_out';
+                  const modalTitle = 'エラー 😢';
+                  const modalText = '既に退勤済みです。';
+
+                  try {
+                    const result = await openModal(
+                      client,
+                      triggerId,
+                      modalTitle,
+                      modalText
+                    );
+                    console.log('Modal opened successfully:', result);
+                  } catch (error) {
+                    console.error('Failed to open modal:', error);
+                  }
+                })();
+                // modalView = {
+                //   type: 'modal',
+                //   title: {
+                //     type: 'plain_text',
+                //     text: 'エラー 😢',
+                //     emoji: true,
+                //   },
+                //   blocks: [
+                //     {
+                //       type: 'section',
+                //       text: {
+                //         type: 'mrkdwn',
+                //         text: '既に退勤済みです。',
+                //       },
+                //     },
+                //   ],
+                // };
+
+                // // モーダルウィンドウを開く
+                // await client.views.open({
+                //   trigger_id: payload.trigger_id,
+                //   view: modalView,
+                // });
               }
 
               console.log('▲ dateSet action end');
@@ -445,7 +461,7 @@ app.post('/slack/actions', async (req, res) => {
             try {
               console.log('▼ goHome action start');
 
-              // Supabaseにデータを保存/更新
+              // Recordテーブルのデータを更新
               const { data: existingRecord, error: fetchError } = await supabase
                 .from('Record')
                 .select('*')
@@ -459,8 +475,6 @@ app.post('/slack/actions', async (req, res) => {
               } else if (fetchError) {
                 throw fetchError;
               }
-
-              let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
 
               // クエリを実行してデータを取得
               const { data: records, error: queryError } = await supabase.rpc(
@@ -479,6 +493,9 @@ app.post('/slack/actions', async (req, res) => {
               const remoteCount = records.filter(
                 (record) => record.work_style === 'remote'
               ).length;
+
+              // 元の数値+1の数値で更新
+              let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
 
               // leaveCheck更新
               const { error: updateError } = await supabase
@@ -591,9 +608,11 @@ app.post('/slack/actions', async (req, res) => {
       }
     } else {
       // コールバックアクション開始
+      console.log('▼ callback action start');
       const callbackId = payload.view?.callback_id;
 
       if (callbackId === 'add_user_modal') {
+        console.log('▼ add user action start');
         // モーダルから入力された値を取得
         const userId =
           payload.view.state.values.user_id_block.user_id_input.value;
@@ -662,6 +681,8 @@ app.post('/slack/actions', async (req, res) => {
           ],
         });
       }
+      console.log('▲ add user action end');
+      console.log('▲ callback action end');
     }
     res.status(200).send();
   } catch (error) {
