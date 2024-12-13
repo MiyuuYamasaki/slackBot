@@ -34,7 +34,9 @@ function getTodaysDate() {
 app.post('/slack/actions', async (req, res) => {
   try {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
-    console.log('Payload:', JSON.stringify(payload, null, 2)); // デバッグ用
+
+    // デバッグ用 ： Payload内容確認時はコメントアウト外してください。
+    // console.log('Payload:', JSON.stringify(payload, null, 2));
 
     if (payload.actions && payload.actions.length > 0) {
       //アクションを取得
@@ -235,7 +237,9 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               if (!userDate) {
-                let responseText = `#${userId}#さんがUsersテーブルに存在しません。追加しますか？`;
+                // UserIDを太字にする
+                let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
+
                 await client.chat.postMessage({
                   channel: payload.channel.id,
                   thread_ts: payload.message.ts,
