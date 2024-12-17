@@ -29,26 +29,39 @@ function getTodaysDate() {
 
 // ボタンが押されたときの処理
 app.post('/slack/actions', (req, res) => {
-  try {
-    const payload = JSON.parse(req.body.payload);
+  exports.lambdaHandler = async (event, context, callback) => {
+    // 何よりもまず Slack にレスポンスを返す
+    callback(null, { statusCode: 200, body: '' });
+    // 以降は普通に処理続行
+    // some codes...
 
-    console.log('Received payload:', JSON.stringify(payload, null, 2));
-    res.status(200).send(); // 先にレスポンスを返す
+    try {
+      const payload = JSON.parse(req.body.payload);
 
-    if (!payload.actions || payload.actions.length === 0) return;
+      // console.log('Received payload:', JSON.stringify(payload, null, 2));
 
-    const action = payload.actions[0].action_id;
-    const userId = payload.user?.name;
-    const messageText = payload.message?.text;
+      // res.status(200).send(); // 先にレスポンスを返す
 
-    if (['button_office', 'button_remote'].includes(action)) {
-      handleWorkStyleChange(payload, action, messageText, userId);
-    } else if (action === 'button_goHome') {
-      handleGoHome(payload, messageText, userId);
+      if (!payload.actions || payload.actions.length === 0) return;
+
+      const action = payload.actions[0].action_id;
+      const userId = payload.user?.name;
+      const messageText = payload.message?.text;
+
+      if (['button_office', 'button_remote'].includes(action)) {
+        handleWorkStyleChange(payload, action, messageText, userId);
+      } else if (action === 'button_goHome') {
+        handleGoHome(payload, messageText, userId);
+      }
+    } catch (error) {
+      console.error('Error handling action:', error);
     }
-  } catch (error) {
-    console.error('Error handling action:', error);
-  }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({}),
+    };
+  };
 });
 
 // 本社・在宅ボタン処理
