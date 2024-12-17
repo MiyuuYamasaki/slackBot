@@ -225,39 +225,39 @@ app.post('/slack/actions', async (req, res) => {
                 .single();
 
               // Userが存在しない場合、User追加を促すボタン付きスレッドメッセージを送信
-              // if (!userDate) {
-              //   let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
+              if (!userDate) {
+                let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
 
-              //   await client.chat.postMessage({
-              //     channel: payload.channel.id,
-              //     thread_ts: payload.message.ts,
-              //     text: responseText,
-              //     blocks: [
-              //       {
-              //         type: 'section',
-              //         text: {
-              //           type: 'mrkdwn',
-              //           text: responseText,
-              //         },
-              //       },
-              //       {
-              //         type: 'actions',
-              //         elements: [
-              //           {
-              //             type: 'button',
-              //             text: {
-              //               type: 'plain_text',
-              //               text: '追加',
-              //               emoji: true,
-              //             },
-              //             action_id: 'button_add',
-              //             style: 'primary',
-              //           },
-              //         ],
-              //       },
-              //     ],
-              //   });
-              // }
+                await client.chat.postMessage({
+                  channel: payload.channel.id,
+                  thread_ts: payload.message.ts,
+                  text: responseText,
+                  blocks: [
+                    {
+                      type: 'section',
+                      text: {
+                        type: 'mrkdwn',
+                        text: responseText,
+                      },
+                    },
+                    {
+                      type: 'actions',
+                      elements: [
+                        {
+                          type: 'button',
+                          text: {
+                            type: 'plain_text',
+                            text: '追加',
+                            emoji: true,
+                          },
+                          action_id: 'button_add',
+                          style: 'primary',
+                        },
+                      ],
+                    },
+                  ],
+                });
+              }
 
               // 選択した勤務体系を取得
               let workStyle = action === 'button_office' ? 'office' : 'remote';
@@ -283,8 +283,8 @@ app.post('/slack/actions', async (req, res) => {
                 if (insertError) throw insertError;
                 console.log('Inserted new record for', userId);
               } else if (
-                existingRecord.workStyle !== workStyle &&
-                existingRecord.leaveCheck % 2 === 0
+                existingRecord.workStyle !== workStyle /*&&*/
+                // existingRecord.leaveCheck % 2 === 0
               ) {
                 // workStyleが異なり、未退勤の場合はUPDATE
                 const { error: updateError } = await supabase
@@ -297,54 +297,54 @@ app.post('/slack/actions', async (req, res) => {
               }
 
               // 新規/未退勤の場合はメッセージ更新
-              if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
-                // "count_query" の結果データから特定の workStyle のカウントを取得
-                const { data: countDate } = await supabase.rpc('count_query');
-                const officeCount =
-                  countDate.find((d) => d.workstyle === 'office')?.countstyle ||
-                  0;
-                const remoteCount =
-                  countDate.find((d) => d.workstyle === 'remote')?.countstyle ||
-                  0;
+              // if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
+              // "count_query" の結果データから特定の workStyle のカウントを取得
+              const { data: countDate } = await supabase.rpc('count_query');
+              const officeCount =
+                countDate.find((d) => d.workstyle === 'office')?.countstyle ||
+                0;
+              const remoteCount =
+                countDate.find((d) => d.workstyle === 'remote')?.countstyle ||
+                0;
 
-                // 関数を呼び出す
-                (async () => {
-                  const channel = payload.channel.id;
-                  const ts = payload.message.ts;
-                  const messageText = payload.message?.text;
-                  const options = {
-                    officeCount: officeCount,
-                    remoteCount: remoteCount,
-                    existingRecord: { workStyle: workStyle },
-                    leaveCheck: 0, // 未退勤時のみのアクションのため
-                  };
+              // 関数を呼び出す
+              (async () => {
+                const channel = payload.channel.id;
+                const ts = payload.message.ts;
+                const messageText = payload.message?.text;
+                const options = {
+                  officeCount: officeCount,
+                  remoteCount: remoteCount,
+                  existingRecord: { workStyle: workStyle },
+                  leaveCheck: existingRecord.leaveCheck,
+                };
 
-                  try {
-                    await updateMessage(
-                      client,
-                      channel,
-                      ts,
-                      messageText,
-                      options
-                    );
-                  } catch (error) {
-                    console.error('Failed to update message:', error);
-                  }
-                })();
-              } else {
-                // 関数を呼び出してモーダルを開く
-                (async () => {
-                  const triggerId = payload.trigger_id;
-                  const modalTitle = 'エラー 😢';
-                  const modalText = '既に退勤済みです。';
+                try {
+                  await updateMessage(
+                    client,
+                    channel,
+                    ts,
+                    messageText,
+                    options
+                  );
+                } catch (error) {
+                  console.error('Failed to update message:', error);
+                }
+              })();
+              // } else {
+              //   // 関数を呼び出してモーダルを開く
+              //   (async () => {
+              //     const triggerId = payload.trigger_id;
+              //     const modalTitle = 'エラー 😢';
+              //     const modalText = '既に退勤済みです。';
 
-                  try {
-                    await openModal(client, triggerId, modalTitle, modalText);
-                  } catch (error) {
-                    console.error('Failed to open modal:', error);
-                  }
-                })();
-              }
+              //     try {
+              //       await openModal(client, triggerId, modalTitle, modalText);
+              //     } catch (error) {
+              //       console.error('Failed to open modal:', error);
+              //     }
+              //   })();
+              // }
 
               console.log('▲ dateSet action end');
             } catch (error) {
@@ -507,50 +507,6 @@ app.post('/slack/actions', async (req, res) => {
       console.log('▲ callback action end');
     }
     res.status(200).send();
-
-    if (payload.user?.name) {
-      // Userが存在するか確認
-      const { data: userDate } = await supabase
-        .from('Users')
-        .select('*')
-        .eq('code', userId)
-        .single();
-
-      // Userが存在しない場合、User追加を促すボタン付きスレッドメッセージを送信
-      if (!userDate) {
-        let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
-
-        await client.chat.postMessage({
-          channel: payload.channel.id,
-          thread_ts: payload.message.ts,
-          text: responseText,
-          blocks: [
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: responseText,
-              },
-            },
-            {
-              type: 'actions',
-              elements: [
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: '追加',
-                    emoji: true,
-                  },
-                  action_id: 'button_add',
-                  style: 'primary',
-                },
-              ],
-            },
-          ],
-        });
-      }
-    }
   } catch (error) {
     console.error('Error handling action:', error);
     res.status(500).send('Internal Server Error');
