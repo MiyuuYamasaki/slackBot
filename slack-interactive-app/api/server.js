@@ -2,7 +2,7 @@ const express = require('express');
 const { WebClient } = require('@slack/web-api');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
-const { openModal } = require('./openModal');
+// const { openModal } = require('./openModal');
 const { updateMessage } = require('./updateMessage');
 
 // 環境変数の設定
@@ -175,10 +175,10 @@ app.post('/slack/actions', async (req, res) => {
                   type: 'plain_text',
                   text: `${ymd} 勤務状況一覧`,
                 },
-                close: {
-                  type: 'plain_text',
-                  text: '閉じる',
-                },
+                // close: {
+                //   type: 'plain_text',
+                //   text: '閉じる',
+                // },
                 blocks: [
                   {
                     type: 'section',
@@ -421,17 +421,41 @@ app.post('/slack/actions', async (req, res) => {
           }
         } else {
           // 関数を呼び出してモーダルを開く
-          (async () => {
-            const triggerId = payload.trigger_id;
-            const modalTitle = 'エラー 😢';
-            const modalText = '当日データ以外の参照・変更はできません。';
+          // (async () => {
+          //   const triggerId = payload.trigger_id;
+          //   const modalTitle = 'エラー 😢';
+          //   const modalText = '当日データ以外の参照・変更はできません。';
 
-            try {
-              await openModal(client, triggerId, modalTitle, modalText);
-            } catch (error) {
-              console.error('Failed to open modal:', error);
-            }
-          })();
+          //   try {
+          //     await openModal(client, triggerId, modalTitle, modalText);
+          //   } catch (error) {
+          //     console.error('Failed to open modal:', error);
+          //   }
+          // })();
+
+          modalView = {
+            type: 'modal',
+            title: {
+              type: 'plain_text',
+              text: 'エラー 😢',
+              emoji: true,
+            },
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: '当日データ以外の参照・変更はできません。',
+                },
+              },
+            ],
+          };
+
+          // モーダルウィンドウを開く
+          await client.views.open({
+            trigger_id: payload.trigger_id,
+            view: modalView,
+          });
           res.status(200).send();
         }
       }
