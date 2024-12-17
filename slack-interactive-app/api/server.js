@@ -113,6 +113,7 @@ app.post('/slack/actions', async (req, res) => {
         });
 
         console.log('▲ usersAdd action end');
+        res.status(200).send();
       } else {
         // メインメッセージから日付を取得
         const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
@@ -209,6 +210,7 @@ app.post('/slack/actions', async (req, res) => {
                 view: modalView,
               });
               console.log('▲ createList action end');
+              res.status(200).send();
             } catch (error) {
               console.log(action + '時にエラーが発生しました:' + error);
             }
@@ -347,6 +349,7 @@ app.post('/slack/actions', async (req, res) => {
               // }
 
               console.log('▲ dateSet action end');
+              res.status(200).send();
             } catch (error) {
               console.log(action + '時にエラーが発生しました:' + error);
             }
@@ -411,6 +414,7 @@ app.post('/slack/actions', async (req, res) => {
               })();
 
               console.log('▲ goHome action end');
+              res.status(200).send();
             } catch (error) {
               console.log(action + '時にエラーが発生しました:' + error);
             }
@@ -428,6 +432,7 @@ app.post('/slack/actions', async (req, res) => {
               console.error('Failed to open modal:', error);
             }
           })();
+          res.status(200).send();
         }
       }
     } else {
@@ -505,8 +510,8 @@ app.post('/slack/actions', async (req, res) => {
       }
       console.log('▲ add user action end');
       console.log('▲ callback action end');
+      res.status(200).send();
     }
-    res.status(200).send();
   } catch (error) {
     console.error('Error handling action:', error);
     res.status(500).send('Internal Server Error');
