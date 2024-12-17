@@ -30,12 +30,10 @@ function getTodaysDate() {
 // ボタンが押されたときの処理
 app.post('/slack/actions', (req, res) => {
   exports.lambdaHandler = async (event, context, callback) => {
-    // 何よりもまず Slack にレスポンスを返す
-    callback(null, { statusCode: 200, body: '' });
-    // 以降は普通に処理続行
-    // some codes...
-
     try {
+      // 何よりもまず Slack にレスポンスを返す
+      callback(null, { statusCode: 200, body: '' });
+
       const payload = JSON.parse(req.body.payload);
 
       // console.log('Received payload:', JSON.stringify(payload, null, 2));
