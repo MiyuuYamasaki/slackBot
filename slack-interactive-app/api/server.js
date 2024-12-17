@@ -126,7 +126,32 @@ app.post('/slack/actions', async (req, res) => {
         const todaysDateString = getTodaysDate(); // 現在の日付を取得
 
         // 当日データ以外は参照・変更を行わない。
-        if (todaysDateString === ymd) {
+        if (todaysDateString != ymd) {
+          modalView = {
+            type: 'modal',
+            title: {
+              type: 'plain_text',
+              text: 'エラー 😢',
+              emoji: true,
+            },
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: '当日データ以外の参照・変更はできません。',
+                },
+              },
+            ],
+          };
+
+          // モーダルウィンドウを開く
+          await client.views.open({
+            trigger_id: payload.trigger_id,
+            view: modalView,
+          });
+          res.status(200).send();
+        } else {
           if (action === 'button_list') {
             // 一覧ボタンクリック時
             try {
@@ -175,10 +200,6 @@ app.post('/slack/actions', async (req, res) => {
                   type: 'plain_text',
                   text: `${ymd} 勤務状況一覧`,
                 },
-                // close: {
-                //   type: 'plain_text',
-                //   text: '閉じる',
-                // },
                 blocks: [
                   {
                     type: 'section',
@@ -298,9 +319,7 @@ app.post('/slack/actions', async (req, res) => {
                 console.log('Updated record for', userId);
               }
 
-              // 新規/未退勤の場合はメッセージ更新
-              // if (!existingRecord || existingRecord.leaveCheck % 2 === 0) {
-              // "count_query" の結果データから特定の workStyle のカウントを取得
+              // メッセージ更新
               const { data: countDate } = await supabase.rpc('count_query');
               const officeCount =
                 countDate.find((d) => d.workstyle === 'office')?.countstyle ||
@@ -333,20 +352,6 @@ app.post('/slack/actions', async (req, res) => {
                   console.error('Failed to update message:', error);
                 }
               })();
-              // } else {
-              //   // 関数を呼び出してモーダルを開く
-              //   (async () => {
-              //     const triggerId = payload.trigger_id;
-              //     const modalTitle = 'エラー 😢';
-              //     const modalText = '既に退勤済みです。';
-
-              //     try {
-              //       await openModal(client, triggerId, modalTitle, modalText);
-              //     } catch (error) {
-              //       console.error('Failed to open modal:', error);
-              //     }
-              //   })();
-              // }
 
               console.log('▲ dateSet action end');
               res.status(200).send();
@@ -419,44 +424,6 @@ app.post('/slack/actions', async (req, res) => {
               console.log(action + '時にエラーが発生しました:' + error);
             }
           }
-        } else {
-          // 関数を呼び出してモーダルを開く
-          // (async () => {
-          //   const triggerId = payload.trigger_id;
-          //   const modalTitle = 'エラー 😢';
-          //   const modalText = '当日データ以外の参照・変更はできません。';
-
-          //   try {
-          //     await openModal(client, triggerId, modalTitle, modalText);
-          //   } catch (error) {
-          //     console.error('Failed to open modal:', error);
-          //   }
-          // })();
-
-          modalView = {
-            type: 'modal',
-            title: {
-              type: 'plain_text',
-              text: 'エラー 😢',
-              emoji: true,
-            },
-            blocks: [
-              {
-                type: 'section',
-                text: {
-                  type: 'mrkdwn',
-                  text: '当日データ以外の参照・変更はできません。',
-                },
-              },
-            ],
-          };
-
-          // モーダルウィンドウを開く
-          await client.views.open({
-            trigger_id: payload.trigger_id,
-            view: modalView,
-          });
-          res.status(200).send();
         }
       }
     } else {
