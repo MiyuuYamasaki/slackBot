@@ -225,39 +225,39 @@ app.post('/slack/actions', async (req, res) => {
                 .single();
 
               // Userが存在しない場合、User追加を促すボタン付きスレッドメッセージを送信
-              if (!userDate) {
-                let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
+              // if (!userDate) {
+              //   let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
 
-                await client.chat.postMessage({
-                  channel: payload.channel.id,
-                  thread_ts: payload.message.ts,
-                  text: responseText,
-                  blocks: [
-                    {
-                      type: 'section',
-                      text: {
-                        type: 'mrkdwn',
-                        text: responseText,
-                      },
-                    },
-                    {
-                      type: 'actions',
-                      elements: [
-                        {
-                          type: 'button',
-                          text: {
-                            type: 'plain_text',
-                            text: '追加',
-                            emoji: true,
-                          },
-                          action_id: 'button_add',
-                          style: 'primary',
-                        },
-                      ],
-                    },
-                  ],
-                });
-              }
+              //   await client.chat.postMessage({
+              //     channel: payload.channel.id,
+              //     thread_ts: payload.message.ts,
+              //     text: responseText,
+              //     blocks: [
+              //       {
+              //         type: 'section',
+              //         text: {
+              //           type: 'mrkdwn',
+              //           text: responseText,
+              //         },
+              //       },
+              //       {
+              //         type: 'actions',
+              //         elements: [
+              //           {
+              //             type: 'button',
+              //             text: {
+              //               type: 'plain_text',
+              //               text: '追加',
+              //               emoji: true,
+              //             },
+              //             action_id: 'button_add',
+              //             style: 'primary',
+              //           },
+              //         ],
+              //       },
+              //     ],
+              //   });
+              // }
 
               // 選択した勤務体系を取得
               let workStyle = action === 'button_office' ? 'office' : 'remote';
@@ -507,6 +507,48 @@ app.post('/slack/actions', async (req, res) => {
       console.log('▲ callback action end');
     }
     res.status(200).send();
+
+    // Userが存在するか確認
+    const { data: userDate } = await supabase
+      .from('Users')
+      .select('*')
+      .eq('code', userId)
+      .single();
+
+    // Userが存在しない場合、User追加を促すボタン付きスレッドメッセージを送信
+    if (!userDate) {
+      let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
+
+      await client.chat.postMessage({
+        channel: payload.channel.id,
+        thread_ts: payload.message.ts,
+        text: responseText,
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: responseText,
+            },
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: '追加',
+                  emoji: true,
+                },
+                action_id: 'button_add',
+                style: 'primary',
+              },
+            ],
+          },
+        ],
+      });
+    }
   } catch (error) {
     console.error('Error handling action:', error);
     res.status(500).send('Internal Server Error');
