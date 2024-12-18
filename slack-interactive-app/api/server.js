@@ -978,27 +978,27 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   const { data: records } = await supabase.rpc('custom_query');
   const officeCount = records.filter((r) => r.work_style === 'office').length;
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-  console.log('officeCount:remoteCount' + officeCount + ':' + remoteCount)(
-    // Slackメッセージ更新
-    // 関数を呼び出す
-    async () => {
-      const channel = payload.channel.id;
-      const ts = payload.message.ts;
-      const messageText = payload.message?.text;
-      const options = {
-        officeCount: officeCount,
-        remoteCount: remoteCount,
-        existingRecord: { workStyle: record.workStyle },
-        leaveCheck: leave_check,
-      };
+  console.log('officeCount:remoteCount' + officeCount + ':' + remoteCount);
 
-      try {
-        await updateMessage(client, channel, ts, messageText, options);
-      } catch (error) {
-        console.error('Failed to update message:', error);
-      }
+  // Slackメッセージ更新
+  // 関数を呼び出す
+  (async () => {
+    const channel = payload.channel.id;
+    const ts = payload.message.ts;
+    const messageText = payload.message?.text;
+    const options = {
+      officeCount: officeCount,
+      remoteCount: remoteCount,
+      existingRecord: { workStyle: record.workStyle },
+      leaveCheck: leave_check,
+    };
+
+    try {
+      await updateMessage(client, channel, ts, messageText, options);
+    } catch (error) {
+      console.error('Failed to update message:', error);
     }
-  )();
+  })();
 
   console.log('▲ handleGoHome end');
   // res.status(200).send();
