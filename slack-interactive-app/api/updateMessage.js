@@ -65,7 +65,7 @@ async function updateMessage(client, channel, ts, messageText, options) {
             emoji: true,
           },
           action_id: 'button_goHome',
-          style: leaveCheck % 2 === 0 ? undefined : 'danger',
+          // style: leaveCheck % 2 === 0 ? undefined : 'danger',
         },
       ],
     },
