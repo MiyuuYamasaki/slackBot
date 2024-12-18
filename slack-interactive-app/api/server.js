@@ -368,7 +368,7 @@ async function handleWorkStyleChange(
       } else if (row.work_style === 'remote') {
         remoteCount = row.style_count || 0;
       }
-      leaveCount = row.leave_count || 0;
+      leaveCount += row.leave_count || 0;
     });
 
     // メッセージ更新処理を並列タスクに追加
@@ -488,7 +488,7 @@ async function handleGoHome(payload, userId, ymd, modalView) {
         } else if (row.work_style === 'remote') {
           remoteCount = row.style_count || 0;
         }
-        leaveCount = row.leave_count || 0;
+        leaveCount += row.leave_count || 0;
       });
 
       (async () => {
