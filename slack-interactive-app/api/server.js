@@ -889,7 +889,8 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   const { data: records } = await supabase.rpc('custom_query');
   const officeCount = records.filter((r) => r.work_style === 'office').length;
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-
+  console.log('officeCount:' + officeCount);
+  console.log('remoteCount:' + remoteCount);
   // 関数を呼び出す
   (async () => {
     const channel = payload.channel.id;
@@ -959,12 +960,13 @@ async function handleGoHome(payload, messageText, userId, ymd) {
     .eq('user_id', userId)
     .single();
 
-  const leaveCheck = record ? (record.leave_check + 1) % 2 : 1;
+  const leaveCheck = record ? (record.leaveCheck + 1) % 2 : 1;
   // let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
   await supabase
     .from('Record')
-    .upsert([{ ymd, user_id: userId, leave_check: leaveCheck }]);
+    .upsert([{ ymd, user_id: userId, leaveCheck: leaveCheck }]);
 
+  console.log(record);
   // DBから最新の人数を取得
   const { data: records } = await supabase.rpc('custom_query');
   const officeCount = records.filter((r) => r.work_style === 'office').length;
