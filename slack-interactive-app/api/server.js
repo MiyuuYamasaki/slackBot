@@ -2,7 +2,6 @@ const express = require('express');
 const { WebClient } = require('@slack/web-api');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
-// const { openModal } = require('./openModal');
 const { updateMessage } = require('./updateMessage');
 
 // 環境変数の設定
@@ -23,12 +22,6 @@ app.use(bodyParser.json());
 
 // ボタンが押されたときの処理
 app.post('/slack/actions', async (req, res) => {
-  // 先にレスポンスを返す
-  // res.status(202).send('');
-  // callback(null, { statusCode: 200, body: '' });
-
-  // 非同期処理を後から実行
-  // async () => {
   try {
     const payload = JSON.parse(req.body.payload); // Slackのpayloadを解析
 
@@ -43,6 +36,7 @@ app.post('/slack/actions', async (req, res) => {
       let modalView;
 
       if (action === 'button_add') {
+        // User情報のモーダルビューを表示
         await handleUserModal(payload, messageText);
       } else {
         // メインメッセージから日付を取得
@@ -50,6 +44,7 @@ app.post('/slack/actions', async (req, res) => {
         const ymd = ymdMatch[1].replace(/\//g, '-'); // "2024/12/10" -> "2024-12-10" に変換
         const todaysDateString = getTodaysDate(); // 現在の日付を取得
 
+        // 当日以外の場合アクションを行わない
         if (todaysDateString != ymd) {
           errorYmdMarch(payload, modalView);
           return;
@@ -57,19 +52,17 @@ app.post('/slack/actions', async (req, res) => {
 
         try {
           if (action === 'button_list') {
+            // 一覧表示
             await handleCreateList(payload, modalView, ymd);
           } else if (action === 'button_office' || action === 'button_remote') {
-            await handleWorkStyleChange(
-              payload,
-              action,
-              messageText,
-              userId,
-              ymd
-            );
+            // DB更新
+            await handleWorkStyleChange(payload, action, userId, ymd);
           } else if (action === 'button_goHome') {
-            await handleGoHome(payload, messageText, userId, ymd);
+            // 退勤チェック
+            await handleGoHome(payload, userId, ymd);
           }
 
+          // レスポンスを返す
           res.status(200).send();
         } catch (e) {
           console.log(action + '時にエラーが発生しました：' + e);
@@ -78,10 +71,10 @@ app.post('/slack/actions', async (req, res) => {
       }
     } else {
       try {
-        // コールバックアクション開始
-        console.log('▼ callback action start');
+        // スレッドボタン押下時
         const callbackId = payload.view?.callback_id;
 
+        // UserをDBへ追加
         if (callbackId === 'add_user_modal') await handleAddUser(payload);
         res.status(200).send();
       } catch (e) {
@@ -93,6 +86,11 @@ app.post('/slack/actions', async (req, res) => {
     console.error('Error handling action:', error);
     res.status(500).send('Internal Server Error');
   }
+});
+
+// サーバーを起動
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
 
 // 当日日付取得用の関数
@@ -110,7 +108,7 @@ function getTodaysDate() {
 
 // User情報入力モーダルを表示
 async function handleUserModal(payload, messageText) {
-  console.log('▼ usersAdd action start');
+  console.log('▼ handleUserModal start');
 
   // メッセージから #タグ内のUserID を抽出
   const userIdMatch = messageText.match(/#([^#]+)#/);
@@ -172,8 +170,7 @@ async function handleUserModal(payload, messageText) {
     },
   });
 
-  console.log('▲ usersAdd action end');
-  // res.status(200).send();
+  console.log('▲ handleUserModal end');
 }
 
 // 画面日付と当日日付がアンマッチの場合
@@ -201,7 +198,6 @@ async function errorYmdMarch(payload, modalView) {
     trigger_id: payload.trigger_id,
     view: modalView,
   });
-  // res.status(200).send();
 }
 
 // 一覧ボタンクリック時
@@ -282,11 +278,10 @@ async function handleCreateList(payload, modalView, ymd) {
     view: modalView,
   });
   console.log('▲ handleCreateList end');
-  // res.status(200).send();
 }
 
 // 本社・在宅ボタン処理
-async function handleWorkStyleChange(payload, action, messageText, userId) {
+async function handleWorkStyleChange(payload, action, userId) {
   console.log('▼ handleWorkStyleChange start');
 
   const workStyle = action === 'button_office' ? 'office' : 'remote';
@@ -299,13 +294,6 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   if (error) {
     console.error('Error executing RPC:', error);
     throw error;
-  }
-
-  // データが正しく取得できているか確認
-  if (!existingRecord || existingRecord.length === 0) {
-    console.log('No record found for userId:', userId);
-  } else {
-    console.log('Query result:', existingRecord);
   }
 
   // ユーザが存在しない場合スレッドへ送信
@@ -335,22 +323,18 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     console.log('Updated record for', userId);
   }
 
+  // 2024.12.18 miyu 反映にラグが出るため、ボタンのカウントを削除
   // DBから最新の人数を取得
-  const { data: records } = await supabase.rpc('count_query');
-  // const officeCount = records.filter((r) => r.work_style === 'office').length;
-  // const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-
-  let officeCount;
-  let remoteCount;
-
-  // 結果を処理
-  records.forEach((row) => {
-    if (row.workstyle === 'office') {
-      officeCount = row.countstyle;
-    } else if (row.workstyle === 'remote') {
-      remoteCount = row.countstyle;
-    }
-  });
+  // const { data: records } = await supabase.rpc('count_query');
+  // let officeCount;
+  // let remoteCount;
+  // records.forEach((row) => {
+  //   if (row.workstyle === 'office') {
+  //     officeCount = row.countstyle || 0;
+  //   } else if (row.workstyle === 'remote') {
+  //     remoteCount = row.countstyle || 0;
+  //   }
+  // });
 
   // 関数を呼び出す
   (async () => {
@@ -358,8 +342,8 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     const ts = payload.message.ts;
     const messageText = payload.message?.text;
     const options = {
-      officeCount: officeCount,
-      remoteCount: remoteCount,
+      // officeCount: officeCount,
+      // remoteCount: remoteCount,
       existingRecord: { workStyle: workStyle },
       leaveCheck: existingRecord[0].leave_check || 0,
     };
@@ -376,6 +360,8 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
 // ユーザコードをスレッドに送信
 async function infoUsers(payload, userId) {
+  console.log('▼ infoUsers start');
+
   let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
 
   await client.chat.postMessage({
@@ -407,10 +393,11 @@ async function infoUsers(payload, userId) {
       },
     ],
   });
+  console.log('▲ infoUsers end');
 }
 
 // 退勤ボタン処理
-async function handleGoHome(payload, messageText, userId, ymd) {
+async function handleGoHome(payload, userId, ymd) {
   console.log('▼ handleGoHome start');
 
   // 退勤状態のトグル
@@ -429,32 +416,18 @@ async function handleGoHome(payload, messageText, userId, ymd) {
     .update({ leaveCheck: leave_check })
     .eq('id', record.id);
 
-  console.log(record);
-  console.log('leaveCheck:' + leave_check);
+  // 2024.12.18 miyu 反映にラグが出るため、ボタンのカウントを削除
   // DBから最新の人数を取得
-  // const { data: records } = await supabase.rpc('custom_query');
-  // const officeCount = records.filter((r) => r.work_style === 'office').length;
-  // const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-  // console.log('officeCount:remoteCount' + officeCount + ':' + remoteCount);
-
-  // DBから最新の人数を取得
-  const { data: records } = await supabase.rpc('count_query');
-  // const officeCount = records.filter((r) => r.work_style === 'office').length;
-  // const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-
-  let officeCount;
-  let remoteCount;
-
-  console.log(records);
-
-  // 結果を処理
-  records.forEach((row) => {
-    if (row.workstyle === 'office') {
-      officeCount = row.countstyle;
-    } else if (row.workstyle === 'remote') {
-      remoteCount = row.countstyle;
-    }
-  });
+  // const { data: records } = await supabase.rpc('count_query');
+  // let officeCount;
+  // let remoteCount;
+  // records.forEach((row) => {
+  //   if (row.workstyle === 'office') {
+  //     officeCount = row.countstyle || 0;
+  //   } else if (row.workstyle === 'remote') {
+  //     remoteCount = row.countstyle || 0;
+  //   }
+  // });
 
   // Slackメッセージ更新
   // 関数を呼び出す
@@ -463,8 +436,8 @@ async function handleGoHome(payload, messageText, userId, ymd) {
     const ts = payload.message.ts;
     const messageText = payload.message?.text;
     const options = {
-      officeCount: officeCount,
-      remoteCount: remoteCount,
+      // officeCount: officeCount,
+      // remoteCount: remoteCount,
       existingRecord: { workStyle: record.workStyle },
       leaveCheck: leave_check,
     };
@@ -481,7 +454,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
 
 // User追加処理
 async function handleAddUser(payload) {
-  console.log('▼ add user action start');
+  console.log('▼ handleAddUser start');
   // モーダルから入力された値を取得
   const userId = payload.view.state.values.user_id_block.user_id_input.value;
   const userName =
@@ -546,11 +519,5 @@ async function handleAddUser(payload) {
       },
     ],
   });
-  console.log('▲ add user action end');
-  console.log('▲ callback action end');
+  console.log('▲ handleAddUser end');
 }
-
-// サーバーを起動
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});

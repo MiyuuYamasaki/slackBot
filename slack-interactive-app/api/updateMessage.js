@@ -12,7 +12,8 @@
  * @returns {Promise<Object>} - Slack APIのレスポンス
  */
 async function updateMessage(client, channel, ts, messageText, options) {
-  const { officeCount, remoteCount, existingRecord, leaveCheck = 0 } = options;
+  // const { officeCount, remoteCount, existingRecord, leaveCheck = 0 } = options;
+  const { existingRecord, leaveCheck = 0 } = options;
 
   const blocks = [
     {
@@ -29,7 +30,8 @@ async function updateMessage(client, channel, ts, messageText, options) {
           type: 'button',
           text: {
             type: 'plain_text',
-            text: `🏢 本社勤務 (${officeCount})`,
+            // text: `🏢 本社勤務 (${officeCount})`, 2024.12.18 miyu del
+            text: '🏢 本社勤務 ',
             emoji: true,
           },
           action_id: 'button_office',
@@ -39,7 +41,8 @@ async function updateMessage(client, channel, ts, messageText, options) {
           type: 'button',
           text: {
             type: 'plain_text',
-            text: `🏠 在宅勤務 (${remoteCount})`,
+            // text: `🏠 在宅勤務 (${remoteCount})`, 2024.12.18 miyu del
+            text: '🏠 在宅勤務 ',
             emoji: true,
           },
           action_id: 'button_remote',
