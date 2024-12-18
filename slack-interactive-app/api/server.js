@@ -541,7 +541,7 @@ app.post('/slack/actions', async (req, res) => {
   //   statusCode: 200,
   //   body: JSON.stringify({}),
   // };
-  res.end();
+  // res.end();
 });
 
 // 当日日付取得用の関数
