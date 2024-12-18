@@ -12,7 +12,7 @@
  * @returns {Promise<Object>} - Slack APIのレスポンス
  */
 async function updateMessage(client, channel, ts, messageText, options) {
-  const { officeCount, remoteCount } = options;
+  const { officeCount, remoteCount, leaveCount } = options;
 
   const blocks = [
     {
@@ -59,7 +59,7 @@ async function updateMessage(client, channel, ts, messageText, options) {
           type: 'button',
           text: {
             type: 'plain_text',
-            text: `👋 退勤`,
+            text: `👋 退勤 (${leaveCount})`,
             emoji: true,
           },
           action_id: 'button_goHome',
