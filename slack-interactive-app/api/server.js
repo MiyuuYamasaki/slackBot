@@ -307,11 +307,23 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
       .eq('code', userId)
       .single()
       .then(({ data, error }) => {
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          // ユーザが存在しない場合、スレッドへ送信
-          infoUsers(payload, userId);
+        if (error && error.code !== 'PGRST116') {
+          // 致命的なエラーの場合はthrow
+          throw error;
         }
+
+        if (!data) {
+          // ユーザーが存在しない場合
+          console.log('ユーザーが存在しません: ', userId);
+          infoUsers(payload, userId);
+        } else {
+          // ユーザーが存在する場合
+          console.log('ユーザーが存在します: ', data);
+        }
+      })
+      .catch((err) => {
+        // その他のエラーの処理
+        console.error('エラーが発生しました: ', err);
       })
   );
 
@@ -441,7 +453,6 @@ async function handleGoHome(payload, userId, ymd) {
 
   let leave_check = (record.leaveCheck || 0) + 1;
 
-  // (async () => {
   const tasks = [];
 
   // leaveCheckの更新
@@ -507,7 +518,6 @@ async function handleGoHome(payload, userId, ymd) {
   } catch (error) {
     console.error('Error in one of the tasks:', error);
   }
-  // })();
 
   console.log('▲ handleGoHome end');
 }
