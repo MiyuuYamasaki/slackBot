@@ -960,11 +960,17 @@ async function handleGoHome(payload, messageText, userId, ymd) {
     .eq('user_id', userId)
     .single();
 
-  const leaveCheck = record ? (record.leaveCheck + 1) % 2 : 1;
-  // let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
-  await supabase
+  // const leaveCheck = record ? (record.leaveCheck + 1) % 2 : 1;
+  let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
+  // await supabase
+  //   .from('Record')aa
+  //   .upsert([{ ymd, user_id: userId, leaveCheck: leaveCheck }]);
+
+  //update
+  const { error: updateError } = await supabase
     .from('Record')
-    .upsert([{ ymd, user_id: userId, leaveCheck: leaveCheck }]);
+    .update({ leaveCheck: leaveCheck })
+    .eq('id', record.record_id);
 
   console.log(record);
   // DBから最新の人数を取得
