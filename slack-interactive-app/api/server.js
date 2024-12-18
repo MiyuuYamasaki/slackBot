@@ -320,7 +320,7 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
       })
   );
 
-  if (!existingRecord) {
+  if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
     tasks.push(
       supabase
