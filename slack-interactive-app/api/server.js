@@ -297,30 +297,69 @@ async function handleWorkStyleChange(payload, action, userId) {
   }
 
   // ユーザが存在しない場合スレッドへ送信
-  if (!existingRecord[0].code === userId) infoUsers(payload, userId);
+  // if (!existingRecord[0].code === userId) infoUsers(payload, userId);
+
+  // if (!existingRecord || existingRecord.length === 0) {
+  //   // レコードが存在しない場合はINSERT
+  //   const { error: insertError } = await supabase.from('Record').insert([
+  //     {
+  //       ymd,
+  //       user_id: userId,
+  //       workStyle: workStyle,
+  //       leaveCheck: 0,
+  //     },
+  //   ]);
+
+  //   if (insertError) throw insertError;
+  //   console.log('Inserted new record for', userId);
+  // } else if (existingRecord[0].work_style !== workStyle) {
+  //   // workStyleが異なる場合はUPDATE
+  //   const { error: updateError } = await supabase
+  //     .from('Record')
+  //     .update({ workStyle: workStyle })
+  //     .eq('id', existingRecord[0].record_id);
+
+  //   if (updateError) throw updateError;
+  //   console.log('Updated record for', userId);
+  // }
+
+  if (!existingRecord[0].code === userId) {
+    infoUsers(payload, userId);
+  }
+
+  // 並列処理の準備
+  const tasks = [];
 
   if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
-    const { error: insertError } = await supabase.from('Record').insert([
-      {
-        ymd,
-        user_id: userId,
-        workStyle: workStyle,
-        leaveCheck: 0,
-      },
-    ]);
-
-    if (insertError) throw insertError;
-    console.log('Inserted new record for', userId);
+    tasks.push(
+      supabase
+        .from('Record')
+        .insert([
+          {
+            ymd,
+            user_id: userId,
+            workStyle: workStyle,
+            leaveCheck: 0,
+          },
+        ])
+        .then(({ error }) => {
+          if (error) throw error;
+          console.log('Inserted new record for', userId);
+        })
+    );
   } else if (existingRecord[0].work_style !== workStyle) {
     // workStyleが異なる場合はUPDATE
-    const { error: updateError } = await supabase
-      .from('Record')
-      .update({ workStyle: workStyle })
-      .eq('id', existingRecord[0].record_id);
-
-    if (updateError) throw updateError;
-    console.log('Updated record for', userId);
+    tasks.push(
+      supabase
+        .from('Record')
+        .update({ workStyle: workStyle })
+        .eq('id', existingRecord[0].record_id)
+        .then(({ error }) => {
+          if (error) throw error;
+          console.log('Updated record for', userId);
+        })
+    );
   }
 
   // 2024.12.18 miyu 反映にラグが出るため、ボタンのカウントを削除
@@ -336,24 +375,51 @@ async function handleWorkStyleChange(payload, action, userId) {
   //   }
   // });
 
-  // 関数を呼び出す
-  (async () => {
-    const channel = payload.channel.id;
-    const ts = payload.message.ts;
-    const messageText = payload.message?.text;
-    const options = {
-      // officeCount: officeCount,
-      // remoteCount: remoteCount,
-      existingRecord: { workStyle: workStyle },
-      leaveCheck: existingRecord[0].leave_check || 0,
-    };
+  // メッセージ更新処理を並列タスクに追加
+  tasks.push(
+    (async () => {
+      const channel = payload.channel.id;
+      const ts = payload.message.ts;
+      const messageText = payload.message?.text;
+      const options = {
+        existingRecord: { workStyle: workStyle },
+        leaveCheck: existingRecord[0]?.leave_check || 0,
+      };
 
-    try {
-      await updateMessage(client, channel, ts, messageText, options);
-    } catch (error) {
-      console.error('Failed to update message:', error);
-    }
-  })();
+      try {
+        await updateMessage(client, channel, ts, messageText, options);
+      } catch (error) {
+        console.error('Failed to update message:', error);
+      }
+    })()
+  );
+
+  // 並列タスクを実行
+  try {
+    await Promise.all(tasks);
+    console.log('All tasks completed successfully.');
+  } catch (error) {
+    console.error('Error in one of the tasks:', error);
+  }
+
+  // 関数を呼び出す
+  // (async () => {
+  //   const channel = payload.channel.id;
+  //   const ts = payload.message.ts;
+  //   const messageText = payload.message?.text;
+  //   const options = {
+  //     // officeCount: officeCount,
+  //     // remoteCount: remoteCount,
+  //     existingRecord: { workStyle: workStyle },
+  //     leaveCheck: existingRecord[0].leave_check || 0,
+  //   };
+
+  //   try {
+  //     await updateMessage(client, channel, ts, messageText, options);
+  //   } catch (error) {
+  //     console.error('Failed to update message:', error);
+  //   }
+  // })();
 
   console.log('▲ handleWorkStyleChange end');
 }
