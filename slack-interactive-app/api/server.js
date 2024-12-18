@@ -961,7 +961,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
     .single();
 
   // const leaveCheck = record ? (record.leaveCheck + 1) % 2 : 1;
-  let leaveCheck = (existingRecord.leaveCheck || 0) + 1;
+  let leaveCheck = (record.leaveCheck || 0) + 1;
   // await supabase
   //   .from('Record')aa
   //   .upsert([{ ymd, user_id: userId, leaveCheck: leaveCheck }]);
