@@ -348,6 +348,33 @@ async function handleWorkStyleChange(
     );
   }
 
+  tasks.push(
+    supabase
+      .from('Users')
+      .select('code, name') // 必要なカラムを指定
+      .eq('code', userId)
+      .single()
+      .then(({ data, error }) => {
+        if (error && error.code !== 'PGRST116') {
+          // 致命的なエラーの場合はthrow
+          throw error;
+        }
+
+        if (!data) {
+          // ユーザーが存在しない場合
+          responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
+          postToThread(payload, responseText);
+        } else {
+          // ユーザー名を取得して使用
+          user = data.name;
+        }
+      })
+      .catch((err) => {
+        // その他のエラーの処理
+        console.error('エラーが発生しました: ', err);
+      })
+  );
+
   // INSERT/UPDATE処理が完了した後にcount_queryを実行する
   try {
     await Promise.all(tasks);
