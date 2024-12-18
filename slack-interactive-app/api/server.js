@@ -291,6 +291,8 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
     userid: String(userId),
   });
 
+  console.log(existingRecord);
+
   if (error) {
     console.error('Error executing RPC:', error);
     throw error;
@@ -336,13 +338,13 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
           console.log('Inserted new record for', userId);
         })
     );
-  } else if (existingRecord[0].work_style !== workStyle) {
+  } else if (existingRecord.work_style !== workStyle) {
     // workStyleが異なる場合はUPDATE
     tasks.push(
       supabase
         .from('Record')
         .update({ workStyle: workStyle })
-        .eq('id', existingRecord[0].record_id)
+        .eq('id', existingRecord.record_id)
         .then(({ error }) => {
           if (error) throw error;
           console.log('Updated record for', userId);
@@ -371,7 +373,7 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
       const messageText = payload.message?.text;
       const options = {
         existingRecord: { workStyle: workStyle },
-        leaveCheck: existingRecord[0]?.leave_check || 0,
+        leaveCheck: existingRecord.leave_check || 0,
       };
 
       try {
