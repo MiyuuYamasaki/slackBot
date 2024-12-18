@@ -24,7 +24,8 @@ app.use(bodyParser.json());
 // ボタンが押されたときの処理
 app.post('/slack/actions', async (req, res) => {
   // 先にレスポンスを返す
-  res.status(200).send('');
+  // res.status(200).send('');
+  callback(null, { statusCode: 200, body: '' });
 
   // 非同期処理を後から実行
   async () => {
@@ -537,6 +538,11 @@ app.post('/slack/actions', async (req, res) => {
       console.error('Error handling action:', error);
       res.status(500).send('Internal Server Error');
     }
+  };
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({}),
   };
 });
 
