@@ -332,7 +332,7 @@ async function handleWorkStyleChange(
 
         if (!data) {
           // ユーザーが存在しない場合
-          responseText = `⚠️ #${userId}# さんのデータが存在しません。追加しますか？`;
+          responseText = `⚠ #${userId}# さんのデータが存在しません。追加しますか？`;
           postToThread(payload, responseText, true);
         } else {
           // ユーザーが存在する場合
@@ -399,7 +399,7 @@ async function handleWorkStyleChange(
       const messageText = payload.message?.text;
       const options = {
         existingRecord: { workStyle: workStyle },
-        leaveCheck: existingRecord[0].leave_check || 0,
+        leaveCheck: existingRecord ? existingRecord[0].leave_check : 0,
       };
 
       try {
@@ -415,7 +415,7 @@ async function handleWorkStyleChange(
   // 並列タスクを実行
   try {
     await Promise.all(tasks);
-    responseText = `ℹ️ ${user} さんが ${workStylemessage} を選択しました！`;
+    responseText = `${user} さんが ${workStylemessage} を選択しました！`;
     console.log(responseText);
     postToThread(payload, responseText, false);
   } catch (error) {
@@ -432,7 +432,6 @@ async function postToThread(payload, responseText, isButton) {
       channel: payload.channel.id,
       thread_ts: payload.message.ts,
       text: responseText,
-      emoji: true,
       // blocks: [
       //   {
       //     type: 'section',
@@ -613,9 +612,9 @@ async function handleAddUser(payload) {
       return res.status(500).send('Failed to add user');
     }
 
-    message = `✅ ${userName} さんのデータを追加しました！`;
+    message = `☑ ${userName} さんのデータを追加しました！`;
   } else {
-    message = `⚠️ #${userId}# さんのデータは既に存在しています。`;
+    message = `⚠ #${userId}# さんのデータは既に存在しています。`;
   }
 
   // モーダルを開いた際に保存したチャンネル情報を取得
