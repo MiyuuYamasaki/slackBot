@@ -330,7 +330,7 @@ async function handleWorkStyleChange(
         if (!data) {
           // ユーザーが存在しない場合
           responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
-          postToThread(payload, responseText);
+          postToThread(payload, responseText, true);
         } else {
           // ユーザーが存在する場合
           console.log('ユーザーが存在します: ', data);
@@ -414,7 +414,7 @@ async function handleWorkStyleChange(
     await Promise.all(tasks);
     responseText = `${user} さんが ${workStylemessage} を選択しました！`;
     console.log(responseText);
-    postToThread(payload, responseText);
+    postToThread(payload, responseText, false);
   } catch (error) {
     console.error('Error in one of the tasks:', error);
   }
@@ -423,36 +423,68 @@ async function handleWorkStyleChange(
 }
 
 // ユーザコードをスレッドに送信
-async function postToThread(payload, responseText) {
-  await client.chat.postMessage({
-    channel: payload.channel.id,
-    thread_ts: payload.message.ts,
-    text: responseText,
-    blocks: [
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: responseText,
-        },
-      },
-      {
-        type: 'actions',
-        elements: [
-          {
-            type: 'button',
-            text: {
-              type: 'plain_text',
-              text: '追加',
-              emoji: true,
-            },
-            action_id: 'button_add',
-            style: 'primary',
+async function postToThread(payload, responseText, isButton) {
+  if (!isButton) {
+    await client.chat.postMessage({
+      channel: payload.channel.id,
+      thread_ts: payload.message.ts,
+      text: responseText,
+      // blocks: [
+      //   {
+      //     type: 'section',
+      //     text: {
+      //       type: 'mrkdwn',
+      //       text: responseText,
+      //     },
+      //   },
+      //   {
+      //     type: 'actions',
+      //     elements: [
+      //       {
+      //         type: 'button',
+      //         text: {
+      //           type: 'plain_text',
+      //           text: '追加',
+      //           emoji: true,
+      //         },
+      //         action_id: 'button_add',
+      //         style: 'primary',
+      //       },
+      //     ],
+      //   },
+      // ],
+    });
+  } else {
+    await client.chat.postMessage({
+      channel: payload.channel.id,
+      thread_ts: payload.message.ts,
+      text: responseText,
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: responseText,
           },
-        ],
-      },
-    ],
-  });
+        },
+        {
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: '追加',
+                emoji: true,
+              },
+              action_id: 'button_add',
+              style: 'primary',
+            },
+          ],
+        },
+      ],
+    });
+  }
   console.log('▲ infoUsers end');
 }
 
