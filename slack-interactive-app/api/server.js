@@ -57,6 +57,8 @@ app.post('/slack/actions', async (req, res) => {
           } else if (action === 'button_goHome') {
             handleGoHome(payload, messageText, userId, ymd);
           }
+
+          res.status(200).send();
         } catch (e) {
           console.log(action + '時にエラーが発生しました：' + e);
           res.status(400).send();
@@ -606,7 +608,7 @@ async function handleAddUser(payload, messageText) {
   });
 
   console.log('▲ usersAdd action end');
-  res.status(200).send();
+  // res.status(200).send();
 }
 
 // 画面日付と当日日付がアンマッチの場合
@@ -634,7 +636,7 @@ async function errorYmdMarch(payload, modalView) {
     trigger_id: payload.trigger_id,
     view: modalView,
   });
-  res.status(200).send();
+  // res.status(200).send();
 }
 
 // 一覧ボタンクリック時
@@ -715,10 +717,88 @@ async function handleCreateList(payload, modalView, ymd) {
     view: modalView,
   });
   console.log('▲ handleCreateList end');
-  res.status(200).send();
+  // res.status(200).send();
 }
 
 // 本社・在宅ボタン処理
+
+async function handleWorkStyleChange(payload, action, messageText, userId) {
+  console.log('▼ handleWorkStyleChange start');
+
+  const workStyle = action === 'button_office' ? 'office' : 'remote';
+
+  // 既にデータが存在するか確認
+  const { data: existingRecord, error } = await supabase.rpc('get_query', {
+    userid: String(userId),
+  });
+
+  if (error) {
+    console.error('Error executing RPC:', error);
+    throw error;
+  }
+  console.log(userId + 'userId');
+
+  // データが正しく取得できているか確認
+  if (
+    !existingRecord ||
+    (Array.isArray(existingRecord) && existingRecord.length === 0)
+  ) {
+    console.log('No record found for userId:', userId);
+  } else {
+    console.log('Query result:', existingRecord);
+  }
+
+  if (
+    !existingRecord ||
+    (Array.isArray(existingRecord) && existingRecord.length === 0)
+  ) {
+    // レコードが存在しない場合はINSERT
+    const { error: insertError } = await supabase.from('Record').insert([
+      {
+        ymd,
+        user_id: userId,
+        workStyle: workStyle,
+        leaveCheck: 0,
+      },
+    ]);
+
+    if (insertError) throw insertError;
+    console.log('Inserted new record for', userId);
+  } else if (existingRecord[0].work_style !== workStyle) {
+    // workStyleが異なる場合はUPDATE
+    const { error: updateError } = await supabase
+      .from('Record')
+      .update({ workStyle: workStyle })
+      .eq('id', existingRecord[0].record_id);
+
+    if (updateError) throw updateError;
+    console.log('Updated record for', userId);
+  }
+
+  // DBから最新の人数を取得
+  const { data: records } = await supabase.rpc('custom_query');
+  const officeCount = records.filter((r) => r.work_style === 'office').length;
+  const remoteCount = records.filter((r) => r.work_style === 'remote').length;
+
+  // 関数を呼び出す
+  const channel = payload.channel.id;
+  const ts = payload.message.ts;
+  const options = {
+    officeCount: officeCount,
+    remoteCount: remoteCount,
+    existingRecord: { workStyle: workStyle },
+    leaveCheck: existingRecord[0].leave_check || 0,
+  };
+
+  try {
+    await updateMessage(client, channel, ts, messageText, options);
+  } catch (error) {
+    console.error('Failed to update message:', error);
+  }
+
+  console.log('▲ handleWorkStyleChange end');
+}
+
 async function handleWorkStyleChange(payload, action, messageText, userId) {
   console.log('▼ handleWorkStyleChange start');
 
@@ -779,26 +859,6 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   const officeCount = records.filter((r) => r.work_style === 'office').length;
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
 
-  // Slackメッセージ更新
-  // await updateMessage(
-  //   client,
-  //   payload.channel.id,
-  //   payload.container.message_ts,
-  //   messageText,
-  //   {
-  //     officeCount,
-  //     remoteCount,
-  //     existingRecord: { workStyle },
-  //   }
-  // );
-
-  // 新規/未退勤の場合はメッセージ更新
-  // const { data: countDate } = await supabase.rpc('count_query');
-  // const officeCount =
-  //   countDate.find((d) => d.workstyle === 'office')?.countstyle || 0;
-  // const remoteCount =
-  //   countDate.find((d) => d.workstyle === 'remote')?.countstyle || 0;
-
   // 関数を呼び出す
   (async () => {
     const channel = payload.channel.id;
@@ -819,7 +879,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   })();
 
   console.log('▲ handleWorkStyleChange end');
-  res.status(200).send();
+  // res.status(200).send();
 }
 
 async function infoUsers(payload, userId) {
@@ -863,7 +923,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   // 退勤状態のトグル
   const { data: record } = await supabase
     .from('Record')
-    .select('leave_check,workStyle')
+    .select('*')
     .eq('ymd', ymd)
     .eq('user_id', userId)
     .single();
@@ -900,7 +960,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   })();
 
   console.log('▲ handleGoHome end');
-  res.status(200).send();
+  // res.status(200).send();
 
   // Recordテーブルのデータを取得
   // const { data: existingRecord } = await supabase
