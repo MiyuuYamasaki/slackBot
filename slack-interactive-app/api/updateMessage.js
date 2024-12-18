@@ -54,6 +54,7 @@ async function updateMessage(client, channel, ts, messageText, options) {
             emoji: true,
           },
           action_id: 'button_list',
+          style: 'praimary',
         },
         {
           type: 'button',

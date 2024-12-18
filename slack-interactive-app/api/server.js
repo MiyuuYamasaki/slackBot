@@ -35,6 +35,7 @@ app.post('/slack/actions', async (req, res) => {
       const messageText = payload.message?.text;
       let modalView;
       let responseText;
+      let message;
 
       if (action === 'button_add') {
         // User情報のモーダルビューを表示
@@ -47,7 +48,8 @@ app.post('/slack/actions', async (req, res) => {
 
         // 当日以外の場合アクションを行わない
         if (todaysDateString != ymd) {
-          errorYmdMarch(payload, modalView);
+          message = '当日データ以外の参照・変更はできません。';
+          openModal(payload, modalView, message);
           return;
         }
 
@@ -181,7 +183,7 @@ async function handleUserModal(payload, messageText) {
 }
 
 // 画面日付と当日日付がアンマッチの場合
-async function errorYmdMarch(payload, modalView) {
+async function openModal(payload, modalView, message) {
   modalView = {
     type: 'modal',
     title: {
@@ -194,7 +196,7 @@ async function errorYmdMarch(payload, modalView) {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: '当日データ以外の参照・変更はできません。',
+          text: message,
         },
       },
     ],
@@ -205,6 +207,7 @@ async function errorYmdMarch(payload, modalView) {
     trigger_id: payload.trigger_id,
     view: modalView,
   });
+  return;
 }
 
 // 一覧ボタンクリック時
@@ -329,7 +332,7 @@ async function handleWorkStyleChange(
 
         if (!data) {
           // ユーザーが存在しない場合
-          responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
+          responseText = `⚠️ #${userId}# さんのデータが存在しません。追加しますか？`;
           postToThread(payload, responseText, true);
         } else {
           // ユーザーが存在する場合
@@ -412,7 +415,7 @@ async function handleWorkStyleChange(
   // 並列タスクを実行
   try {
     await Promise.all(tasks);
-    responseText = `${user} さんが ${workStylemessage} を選択しました！`;
+    responseText = `ℹ️ ${user} さんが ${workStylemessage} を選択しました！`;
     console.log(responseText);
     postToThread(payload, responseText, false);
   } catch (error) {
@@ -429,6 +432,7 @@ async function postToThread(payload, responseText, isButton) {
       channel: payload.channel.id,
       thread_ts: payload.message.ts,
       text: responseText,
+      emoji: true,
       // blocks: [
       //   {
       //     type: 'section',
@@ -499,6 +503,11 @@ async function handleGoHome(payload, userId, ymd) {
     .eq('ymd', ymd)
     .eq('user_id', userId)
     .single();
+
+  if (!record) {
+    message = `未だ出勤していません。本社勤務・在宅勤務を選択してください。`;
+    openModal(payload, modalView, message);
+  }
 
   let leave_check = (record.leaveCheck || 0) + 1;
 
@@ -604,9 +613,9 @@ async function handleAddUser(payload) {
       return res.status(500).send('Failed to add user');
     }
 
-    message = `*${userName}* さんのデータを追加しました！`;
+    message = `✅ ${userName} さんのデータを追加しました！`;
   } else {
-    message = `*#${userId}#* さんのデータは既に存在しています。`;
+    message = `⚠️ #${userId}# さんのデータは既に存在しています。`;
   }
 
   // モーダルを開いた際に保存したチャンネル情報を取得
