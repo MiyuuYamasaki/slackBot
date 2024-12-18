@@ -308,17 +308,17 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
       .select('code')
       .eq('code', userId)
       .single()
-      .then(({ data }) => {
-        // レスポンスの内容を確認
+      .then(({ data, error }) => {
+        if (error) throw error;
         if (!data || data.length === 0) {
           // ユーザが存在しない場合、スレッドへ送信
           infoUsers(payload, userId);
         }
       })
-      .catch((err) => {
-        console.error('エラーが発生しました: ', err);
-      })
   );
+
+  console.log(existingRecord[0].work_style);
+  console.log(existingRecord[0].leave_check);
 
   if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
