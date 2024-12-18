@@ -336,11 +336,22 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   }
 
   // DBから最新の人数を取得
-  // const { data: records } = await supabase.rpc('custom_query');
+  const { data: records } = await supabase.rpc('count_query');
   // const officeCount = records.filter((r) => r.work_style === 'office').length;
   // const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-  const officeCount = 'test';
-  const remoteCount = 'test';
+
+  let officeCount;
+  let remoteCount;
+
+  // 結果を処理
+  records.rows.forEach((row) => {
+    if (row.workstyle === 'office') {
+      officeCount = row.countstyle;
+    } else if (row.workstyle === 'remote') {
+      remoteCount = row.countstyle;
+    }
+  });
+
   // 関数を呼び出す
   (async () => {
     const channel = payload.channel.id;
@@ -425,8 +436,23 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   // const officeCount = records.filter((r) => r.work_style === 'office').length;
   // const remoteCount = records.filter((r) => r.work_style === 'remote').length;
   // console.log('officeCount:remoteCount' + officeCount + ':' + remoteCount);
-  const officeCount = 'test';
-  const remoteCount = 'test';
+
+  // DBから最新の人数を取得
+  const { data: records } = await supabase.rpc('count_query');
+  // const officeCount = records.filter((r) => r.work_style === 'office').length;
+  // const remoteCount = records.filter((r) => r.work_style === 'remote').length;
+
+  let officeCount;
+  let remoteCount;
+
+  // 結果を処理
+  records.rows.forEach((row) => {
+    if (row.workstyle === 'office') {
+      officeCount = row.countstyle;
+    } else if (row.workstyle === 'remote') {
+      remoteCount = row.countstyle;
+    }
+  });
 
   // Slackメッセージ更新
   // 関数を呼び出す
