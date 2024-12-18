@@ -312,6 +312,7 @@ async function handleWorkStyleChange(
 
   // 並列処理の準備
   const tasks = [];
+  let user = userId;
 
   // ユーザーが存在するか確認
   tasks.push(
@@ -333,6 +334,7 @@ async function handleWorkStyleChange(
         } else {
           // ユーザーが存在する場合
           console.log('ユーザーが存在します: ', data);
+          user = data.name;
         }
       })
       .catch((err) => {
@@ -410,7 +412,6 @@ async function handleWorkStyleChange(
   // 並列タスクを実行
   try {
     await Promise.all(tasks);
-    let user = data.name || userId;
     responseText = `${user} さんが ${workStylemessage} を選択しました！`;
     console.log(responseText);
     postToThread(payload, responseText);
