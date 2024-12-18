@@ -750,7 +750,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     console.log('Query result:', existingRecord);
   }
 
-  if (!existingRecord) {
+  if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
     const { error: insertError } = await supabase.from('Record').insert([
       {
@@ -763,7 +763,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
     if (insertError) throw insertError;
     console.log('Inserted new record for', userId);
-  } else if (existingRecord.workStyle !== workStyle) {
+  } else if (existingRecord.work_style !== workStyle) {
     // workStyleが異なる場合はUPDATE
     const { error: updateError } = await supabase
       .from('Record')
@@ -808,7 +808,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
       officeCount: officeCount,
       remoteCount: remoteCount,
       existingRecord: { workStyle: workStyle },
-      leaveCheck: existingRecord.leaveCheck || 0,
+      leaveCheck: existingRecord.leave_check || 0,
     };
 
     try {
@@ -863,7 +863,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   // 退勤状態のトグル
   const { data: record } = await supabase
     .from('Record')
-    .select('leave_check')
+    .select('leave_check,workStyle')
     .eq('ymd', ymd)
     .eq('user_id', userId)
     .single();
@@ -888,7 +888,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
     const options = {
       officeCount: officeCount,
       remoteCount: remoteCount,
-      existingRecord: { workStyle: existingRecord.workStyle },
+      existingRecord: { workStyle: record.workStyle },
       leaveCheck: leaveCheck,
     };
 
