@@ -296,18 +296,27 @@ async function handleWorkStyleChange(payload, action, userId) {
     throw error;
   }
 
-  console.log('existingRecord[0].code:' + existingRecord[0].code);
-  // ユーザが存在しない場合スレッドへ送信
-  if (
-    !existingRecord[0].code ||
-    !existingRecord ||
-    existingRecord.length === 0
-  ) {
-    infoUsers(payload, userId);
-  }
-
   // 並列処理の準備
   const tasks = [];
+
+  // ユーザーが存在するか確認
+  tasks.push(
+    supabase
+      .from('Users')
+      .select('code')
+      .eq('code', userId)
+      .single()
+      .then(({ data, error }) => {
+        // レスポンスの内容を確認
+        if (error || !data) {
+          // ユーザが存在しない場合、スレッドへ送信
+          infoUsers(payload, userId);
+        }
+      })
+      .catch((err) => {
+        console.error('エラーが発生しました: ', err);
+      })
+  );
 
   if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
