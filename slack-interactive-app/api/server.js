@@ -961,7 +961,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
     .single();
 
   // const leaveCheck = record ? (record.leaveCheck + 1) % 2 : 1;
-  let leaveCheck = (record.leaveCheck || 0) + 1;
+  let leave_check = (record.leaveCheck || 0) + 1;
   // await supabase
   //   .from('Record')aa
   //   .upsert([{ ymd, user_id: userId, leaveCheck: leaveCheck }]);
@@ -969,34 +969,36 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   //update
   const { error: updateError } = await supabase
     .from('Record')
-    .update({ leaveCheck: leaveCheck })
+    .update({ leaveCheck: leave_check })
     .eq('id', record.record_id);
 
   console.log(record);
+  console.log('leaveCheck:' + leave_check);
   // DBから最新の人数を取得
   const { data: records } = await supabase.rpc('custom_query');
   const officeCount = records.filter((r) => r.work_style === 'office').length;
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
+  console.log('officeCount:remoteCount' + officeCount + ':' + remoteCount)(
+    // Slackメッセージ更新
+    // 関数を呼び出す
+    async () => {
+      const channel = payload.channel.id;
+      const ts = payload.message.ts;
+      const messageText = payload.message?.text;
+      const options = {
+        officeCount: officeCount,
+        remoteCount: remoteCount,
+        existingRecord: { workStyle: record.workStyle },
+        leaveCheck: leave_check,
+      };
 
-  // Slackメッセージ更新
-  // 関数を呼び出す
-  (async () => {
-    const channel = payload.channel.id;
-    const ts = payload.message.ts;
-    const messageText = payload.message?.text;
-    const options = {
-      officeCount: officeCount,
-      remoteCount: remoteCount,
-      existingRecord: { workStyle: record.workStyle },
-      leaveCheck: leaveCheck,
-    };
-
-    try {
-      await updateMessage(client, channel, ts, messageText, options);
-    } catch (error) {
-      console.error('Failed to update message:', error);
+      try {
+        await updateMessage(client, channel, ts, messageText, options);
+      } catch (error) {
+        console.error('Failed to update message:', error);
+      }
     }
-  })();
+  )();
 
   console.log('▲ handleGoHome end');
   // res.status(200).send();
