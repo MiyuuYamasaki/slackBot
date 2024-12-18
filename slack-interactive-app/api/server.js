@@ -860,6 +860,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     console.log('No record found for userId:', userId);
   } else {
     console.log('Query result:', existingRecord);
+    console.log(existingRecord.code);
   }
 
   if (!existingRecord.code) {
