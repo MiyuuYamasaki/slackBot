@@ -77,11 +77,17 @@ app.post('/slack/actions', async (req, res) => {
         }
       }
     } else {
-      // コールバックアクション開始
-      console.log('▼ callback action start');
-      const callbackId = payload.view?.callback_id;
+      try {
+        // コールバックアクション開始
+        console.log('▼ callback action start');
+        const callbackId = payload.view?.callback_id;
 
-      if (callbackId === 'add_user_modal') await handleAddUser(payload);
+        if (callbackId === 'add_user_modal') await handleAddUser(payload);
+        res.status(200).send();
+      } catch (e) {
+        console.log(action + '時にエラーが発生しました：' + e);
+        res.status(400).send();
+      }
     }
   } catch (error) {
     console.error('Error handling action:', error);
@@ -481,6 +487,8 @@ async function handleAddUser(payload) {
   } else {
     message = `*#${userId}#* さんのデータは既に存在しています。`;
   }
+
+  console.log(message);
 
   // モーダルを開いた際に保存したチャンネル情報を取得
   const privateMetadata = JSON.parse(payload.view.private_metadata || '{}');
