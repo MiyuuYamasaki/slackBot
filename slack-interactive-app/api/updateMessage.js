@@ -33,7 +33,7 @@ async function updateMessage(client, channel, ts, messageText, options) {
             emoji: true,
           },
           action_id: 'button_office',
-          style: existingRecord?.workStyle === 'office' ? 'primary' : undefined,
+          // style: existingRecord?.workStyle === 'office' ? 'primary' : undefined,
         },
         {
           type: 'button',
@@ -43,7 +43,7 @@ async function updateMessage(client, channel, ts, messageText, options) {
             emoji: true,
           },
           action_id: 'button_remote',
-          style: existingRecord?.workStyle === 'remote' ? 'primary' : undefined,
+          // style: existingRecord?.workStyle === 'remote' ? 'primary' : undefined,
         },
         {
           type: 'button',
