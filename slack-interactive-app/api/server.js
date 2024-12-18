@@ -24,7 +24,7 @@ app.use(bodyParser.json());
 // ボタンが押されたときの処理
 app.post('/slack/actions', async (req, res) => {
   // 先にレスポンスを返す
-  res.status(200).send('');
+  res.status(202).send('');
   // callback(null, { statusCode: 200, body: '' });
 
   // 非同期処理を後から実行
@@ -43,7 +43,7 @@ app.post('/slack/actions', async (req, res) => {
       let modalView;
 
       if (action === 'button_add') {
-        await handleAddUser(payload, messageText);
+        handleAddUser(payload, messageText);
       } else {
         // メインメッセージから日付を取得
         const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
@@ -51,23 +51,17 @@ app.post('/slack/actions', async (req, res) => {
         const todaysDateString = getTodaysDate(); // 現在の日付を取得
 
         if (todaysDateString != ymd) {
-          await errorYmdMarch(payload, modalView);
+          errorYmdMarch(payload, modalView);
           return;
         }
 
         try {
           if (action === 'button_list') {
-            await handleCreateList(payload, modalView, ymd);
+            handleCreateList(payload, modalView, ymd);
           } else if (action === 'button_office' || action === 'button_remote') {
-            await handleWorkStyleChange(
-              payload,
-              action,
-              messageText,
-              userId,
-              ymd
-            );
+            handleWorkStyleChange(payload, action, messageText, userId, ymd);
           } else if (action === 'button_goHome') {
-            await handleGoHome(payload, messageText, userId, ymd);
+            handleGoHome(payload, messageText, userId, ymd);
           }
 
           // res.status(200).send();
@@ -464,7 +458,7 @@ app.post('/slack/actions', async (req, res) => {
       console.log('▼ callback action start');
       const callbackId = payload.view?.callback_id;
 
-      if (callbackId === 'add_user_modal') await handleCallBack(payload);
+      if (callbackId === 'add_user_modal') handleCallBack(payload);
     }
     //       console.log('▼ add user action start');
     //       // モーダルから入力された値を取得
@@ -1080,7 +1074,6 @@ async function handleCallBack(payload) {
   });
   console.log('▲ add user action end');
   console.log('▲ callback action end');
-  res.status(200).send();
 }
 
 // サーバーを起動
