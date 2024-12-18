@@ -846,7 +846,8 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
   // 既にデータが存在するか確認
   const { data: existingRecord, error } = await supabase.rpc('get_query', {
-    userid: String(userId),
+    // userid: String(userId),
+    userid: userId,
   });
   if (error) {
     console.error('Error executing RPC:', error);
