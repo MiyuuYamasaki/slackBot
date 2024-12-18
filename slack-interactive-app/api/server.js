@@ -317,9 +317,6 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
       })
   );
 
-  console.log(existingRecord[0].work_style);
-  console.log(existingRecord[0].leave_check);
-
   if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
     tasks.push(
@@ -338,13 +335,13 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
           console.log('Inserted new record for', userId);
         })
     );
-  } else if (existingRecord.work_style !== workStyle) {
+  } else if (existingRecord[0].work_style !== workStyle) {
     // workStyleが異なる場合はUPDATE
     tasks.push(
       supabase
         .from('Record')
         .update({ workStyle: workStyle })
-        .eq('id', existingRecord.record_id)
+        .eq('id', existingRecord[0].record_id)
         .then(({ error }) => {
           if (error) throw error;
           console.log('Updated record for', userId);
@@ -373,7 +370,7 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
       const messageText = payload.message?.text;
       const options = {
         existingRecord: { workStyle: workStyle },
-        leaveCheck: existingRecord.leave_check || 0,
+        leaveCheck: existingRecord[0].leave_check || 0,
       };
 
       try {
