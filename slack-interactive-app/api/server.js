@@ -343,7 +343,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
       officeCount: officeCount,
       remoteCount: remoteCount,
       existingRecord: { workStyle: workStyle },
-      leaveCheck: existingRecord.leave_check || 0,
+      leaveCheck: existingRecord[0].leave_check || 0,
     };
 
     try {
