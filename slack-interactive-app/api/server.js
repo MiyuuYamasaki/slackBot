@@ -68,7 +68,7 @@ app.post('/slack/actions', async (req, res) => {
             );
           } else if (action === 'button_goHome') {
             // 退勤チェック
-            await handleGoHome(payload, userId, ymd);
+            await handleGoHome(payload, userId, ymd, modalView);
           }
 
           // レスポンスを返す
@@ -493,7 +493,7 @@ async function postToThread(payload, responseText, isButton) {
 }
 
 // 退勤ボタン処理
-async function handleGoHome(payload, userId, ymd) {
+async function handleGoHome(payload, userId, ymd, modalView) {
   console.log('▼ handleGoHome start');
 
   // 退勤状態のトグル

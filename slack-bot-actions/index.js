@@ -69,6 +69,7 @@ async function sendInteractiveMessage() {
                 emoji: true,
               },
               action_id: 'button_list',
+              style: 'primary',
             },
             {
               type: 'button',
