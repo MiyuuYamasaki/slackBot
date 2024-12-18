@@ -51,14 +51,26 @@ app.post('/slack/actions', async (req, res) => {
 
         try {
           if (action === 'button_list') {
-            handleCreateList(payload, modalView, ymd);
+            handleCreateList(payload, modalView, ymd).then(() => {
+              res.status(200).send();
+            });
           } else if (action === 'button_office' || action === 'button_remote') {
-            handleWorkStyleChange(payload, action, messageText, userId, ymd);
+            handleWorkStyleChange(
+              payload,
+              action,
+              messageText,
+              userId,
+              ymd
+            ).then(() => {
+              res.status(200).send();
+            });
           } else if (action === 'button_goHome') {
-            handleGoHome(payload, messageText, userId, ymd);
+            handleGoHome(payload, messageText, userId, ymd).then(() => {
+              res.status(200).send();
+            });
           }
 
-          res.status(200).send();
+          // res.status(200).send();
         } catch (e) {
           console.log(action + '時にエラーが発生しました：' + e);
           res.status(400).send();
@@ -780,21 +792,40 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   const officeCount = records.filter((r) => r.work_style === 'office').length;
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
 
-  // 関数を呼び出す
-  const channel = payload.channel.id;
-  const ts = payload.message.ts;
-  const options = {
-    officeCount: officeCount,
-    remoteCount: remoteCount,
-    existingRecord: { workStyle: workStyle },
-    leaveCheck: existingRecord[0].leave_check || 0,
-  };
+  // // 関数を呼び出す
+  // const channel = payload.channel.id;
+  // const ts = payload.message.ts;
+  // const options = {
+  //   officeCount: officeCount,
+  //   remoteCount: remoteCount,
+  //   existingRecord: { workStyle: workStyle },
+  //   leaveCheck: existingRecord[0].leave_check || 0,
+  // };
 
-  try {
-    await updateMessage(client, channel, ts, messageText, options);
-  } catch (error) {
-    console.error('Failed to update message:', error);
-  }
+  // try {
+  //   await updateMessage(client, channel, ts, messageText, options);
+  // } catch (error) {
+  //   console.error('Failed to update message:', error);
+  // }
+
+  // 関数を呼び出す
+  (async () => {
+    const channel = payload.channel.id;
+    const ts = payload.message.ts;
+    const messageText = payload.message?.text;
+    const options = {
+      officeCount: officeCount,
+      remoteCount: remoteCount,
+      existingRecord: { workStyle: workStyle },
+      leaveCheck: existingRecord.leave_check || 0,
+    };
+
+    try {
+      await updateMessage(client, channel, ts, messageText, options);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+    }
+  })();
 
   console.log('▲ handleWorkStyleChange end');
 }
