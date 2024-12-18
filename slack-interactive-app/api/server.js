@@ -34,6 +34,7 @@ app.post('/slack/actions', async (req, res) => {
       const userId = payload.user?.name;
       const messageText = payload.message?.text;
       let modalView;
+      let responseText;
 
       if (action === 'button_add') {
         // User情報のモーダルビューを表示
@@ -56,7 +57,13 @@ app.post('/slack/actions', async (req, res) => {
             await handleCreateList(payload, modalView, ymd);
           } else if (action === 'button_office' || action === 'button_remote') {
             // DB更新
-            await handleWorkStyleChange(payload, action, userId, ymd);
+            await handleWorkStyleChange(
+              payload,
+              action,
+              userId,
+              ymd,
+              responseText
+            );
           } else if (action === 'button_goHome') {
             // 退勤チェック
             await handleGoHome(payload, userId, ymd);
@@ -281,10 +288,17 @@ async function handleCreateList(payload, modalView, ymd) {
 }
 
 // 本社・在宅ボタン処理
-async function handleWorkStyleChange(payload, action, userId, ymd) {
+async function handleWorkStyleChange(
+  payload,
+  action,
+  userId,
+  ymd,
+  responseText
+) {
   console.log('▼ handleWorkStyleChange start');
 
   const workStyle = action === 'button_office' ? 'office' : 'remote';
+  const workStylemessage = action === 'button_office' ? '本社勤務' : '在宅勤務';
 
   // 既にデータが存在するか確認
   const { data: existingRecord, error } = await supabase.rpc('get_query', {
@@ -303,7 +317,7 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
   tasks.push(
     supabase
       .from('Users')
-      .select('code')
+      .select('code , name')
       .eq('code', userId)
       .single()
       .then(({ data, error }) => {
@@ -314,8 +328,8 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
 
         if (!data) {
           // ユーザーが存在しない場合
-          console.log('ユーザーが存在しません: ', userId);
-          infoUsers(payload, userId);
+          responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
+          postToThread(payload, responseText);
         } else {
           // ユーザーが存在する場合
           console.log('ユーザーが存在します: ', data);
@@ -391,9 +405,15 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
     })()
   );
 
+  tasks.push();
+
   // 並列タスクを実行
   try {
     await Promise.all(tasks);
+    let user = data.name || userId;
+    responseText = `${user} さんが ${workStylemessage} を選択しました！`;
+    console.log(responseText);
+    postToThread(payload, responseText);
   } catch (error) {
     console.error('Error in one of the tasks:', error);
   }
@@ -402,11 +422,7 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
 }
 
 // ユーザコードをスレッドに送信
-async function infoUsers(payload, userId) {
-  console.log('▼ infoUsers start');
-
-  let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
-
+async function postToThread(payload, responseText) {
   await client.chat.postMessage({
     channel: payload.channel.id,
     thread_ts: payload.message.ts,
