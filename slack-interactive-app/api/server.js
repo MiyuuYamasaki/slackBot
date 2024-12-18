@@ -281,7 +281,7 @@ async function handleCreateList(payload, modalView, ymd) {
 }
 
 // 本社・在宅ボタン処理
-async function handleWorkStyleChange(payload, action, userId) {
+async function handleWorkStyleChange(payload, action, userId, ymd) {
   console.log('▼ handleWorkStyleChange start');
 
   const workStyle = action === 'button_office' ? 'office' : 'remote';
@@ -318,14 +318,14 @@ async function handleWorkStyleChange(payload, action, userId) {
       })
   );
 
-  if (!existingRecord || existingRecord.length === 0) {
+  if (!existingRecord) {
     // レコードが存在しない場合はINSERT
     tasks.push(
       supabase
         .from('Record')
         .insert([
           {
-            ymd,
+            ymd: ymd,
             user_id: userId,
             workStyle: workStyle,
             leaveCheck: 0,
