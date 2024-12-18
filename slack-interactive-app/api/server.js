@@ -308,9 +308,9 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
       .select('code')
       .eq('code', userId)
       .single()
-      .then(({ data, error }) => {
+      .then(({ data }) => {
         // レスポンスの内容を確認
-        if (error || !data) {
+        if (!data || data.length === 0) {
           // ユーザが存在しない場合、スレッドへ送信
           infoUsers(payload, userId);
         }
