@@ -882,12 +882,12 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
     if (insertError) throw insertError;
     console.log('Inserted new record for', userId);
-  } else if (existingRecord.work_style !== workStyle) {
+  } else if (existingRecord[0].work_style !== workStyle) {
     // workStyleが異なる場合はUPDATE
     const { error: updateError } = await supabase
       .from('Record')
       .update({ workStyle: workStyle })
-      .eq('id', existingRecord.record_id);
+      .eq('id', existingRecord[0].record_id);
 
     if (updateError) throw updateError;
     console.log('Updated record for', userId);
@@ -908,7 +908,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
       officeCount: officeCount,
       remoteCount: remoteCount,
       existingRecord: { workStyle: workStyle },
-      leaveCheck: existingRecord.leave_check || 0,
+      leaveCheck: existingRecord[0].leave_check || 0,
     };
 
     try {
