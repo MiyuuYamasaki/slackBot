@@ -860,14 +860,14 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     console.log('No record found for userId:', userId);
   } else {
     console.log('Query result:', existingRecord);
-    console.log(existingRecord.code);
+    console.log(existingRecord[0].code);
   }
 
-  if (!existingRecord.code) {
-    infoUsers(payload, userId);
-  } else {
-    console.log('Hello.' + existingRecord.user_id);
-  }
+  // if (!existingRecord.code) {
+  //   infoUsers(payload, userId);
+  // } else {
+  //   console.log('Hello.' + existingRecord.user_id);
+  // }
 
   if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
