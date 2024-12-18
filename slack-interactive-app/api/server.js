@@ -768,7 +768,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     const { error: updateError } = await supabase
       .from('Record')
       .update({ workStyle: workStyle })
-      .eq('id', existingRecord.id);
+      .eq('id', existingRecord.record_id);
 
     if (updateError) throw updateError;
     console.log('Updated record for', userId);
