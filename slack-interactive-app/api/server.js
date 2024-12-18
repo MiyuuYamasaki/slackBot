@@ -51,7 +51,7 @@ app.post('/slack/actions', async (req, res) => {
 
         try {
           if (action === 'button_list') {
-            handleCreateList(payload, modalView, action);
+            handleCreateList(payload, modalView, ymd);
           } else if (action === 'button_office' || action === 'button_remote') {
             handleWorkStyleChange(payload, action, messageText, userId, ymd);
           } else if (action === 'button_goHome') {
@@ -638,7 +638,7 @@ async function errorYmdMarch(payload, modalView) {
 }
 
 // 一覧ボタンクリック時
-async function handleCreateList(payload, modalView) {
+async function handleCreateList(payload, modalView, ymd) {
   console.log('▼ handleCreateList start');
 
   // クエリを実行してデータを取得
@@ -737,10 +737,20 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   const { data: existingRecord } = await supabase.rpc('get_query', {
     userid: userId,
   });
+  console.log(userId + 'userId');
 
-  console.log('existingRecord:' + existingRecord);
-  console.log('existingRecord.code:' + existingRecord.code);
-  if (!existingRecord.code) infoUsers(payload, userId);
+  if (existingRecord) {
+    console.log('No record found.');
+  } else {
+    console.log('Record found:', existingRecord);
+  }
+
+  if (existingRecord && existingRecord.code) {
+    console.log('User code:', existingRecord[0].code);
+    infoUsers(payload, userId);
+  } else {
+    console.log('No code found for the user.');
+  }
 
   if (!existingRecord) {
     // レコードが存在しない場合はINSERT
