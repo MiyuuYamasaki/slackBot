@@ -363,7 +363,7 @@ async function handleWorkStyleChange(
         if (!data) {
           // ユーザーが存在しない場合
           responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
-          postToThread(payload, responseText);
+          postToThread(payload, responseText, true);
         } else {
           // ユーザー名を取得して使用
           user = data.name;
