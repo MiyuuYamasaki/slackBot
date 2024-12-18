@@ -298,7 +298,11 @@ async function handleWorkStyleChange(payload, action, userId) {
 
   console.log('existingRecord[0].code:' + existingRecord[0].code);
   // ユーザが存在しない場合スレッドへ送信
-  if (!existingRecord[0].code) {
+  if (
+    !existingRecord[0].code ||
+    !existingRecord ||
+    existingRecord.length === 0
+  ) {
     infoUsers(payload, userId);
   }
 
