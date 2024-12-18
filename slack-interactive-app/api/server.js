@@ -291,8 +291,6 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
     userid: String(userId),
   });
 
-  console.log(existingRecord);
-
   if (error) {
     console.error('Error executing RPC:', error);
     throw error;
@@ -384,7 +382,6 @@ async function handleWorkStyleChange(payload, action, userId, ymd) {
   // 並列タスクを実行
   try {
     await Promise.all(tasks);
-    console.log('All tasks completed successfully.');
   } catch (error) {
     console.error('Error in one of the tasks:', error);
   }
@@ -444,23 +441,23 @@ async function handleGoHome(payload, userId, ymd) {
 
   let leave_check = (record.leaveCheck || 0) + 1;
 
-  (async () => {
-    const tasks = [];
+  // (async () => {
+  const tasks = [];
 
-    // leaveCheckの更新
-    tasks.push(
-      supabase
-        .from('Record')
-        .update({ leaveCheck: leave_check })
-        .eq('id', record.id)
-        .then(({ error }) => {
-          if (error) throw error;
-          console.log('Updated leaveCheck for record ID:', record.id);
-        })
-    );
+  // leaveCheckの更新
+  tasks.push(
+    supabase
+      .from('Record')
+      .update({ leaveCheck: leave_check })
+      .eq('id', record.id)
+      .then(({ error }) => {
+        if (error) throw error;
+        console.log('Updated leaveCheck for record ID:', record.id);
+      })
+  );
 
-    // DBから最新の人数を取得（必要ならアンコメント）
-    /*
+  // DBから最新の人数を取得（必要ならアンコメント）
+  /*
     tasks.push(
       supabase.rpc('count_query').then(({ data: records, error }) => {
         if (error) throw error;
@@ -482,37 +479,35 @@ async function handleGoHome(payload, userId, ymd) {
     );
     */
 
-    // Slackメッセージ更新
-    tasks.push(
-      (async () => {
-        const channel = payload.channel.id;
-        const ts = payload.message.ts;
-        const messageText = payload.message?.text;
+  // Slackメッセージ更新
+  tasks.push(
+    (async () => {
+      const channel = payload.channel.id;
+      const ts = payload.message.ts;
+      const messageText = payload.message?.text;
 
-        const options = {
-          // officeCount: officeCount, // 必要なら有効化
-          // remoteCount: remoteCount, // 必要なら有効化
-          existingRecord: { workStyle: record.workStyle },
-          leaveCheck: leave_check,
-        };
+      const options = {
+        // officeCount: officeCount, // 必要なら有効化
+        // remoteCount: remoteCount, // 必要なら有効化
+        existingRecord: { workStyle: record.workStyle },
+        leaveCheck: leave_check,
+      };
 
-        try {
-          await updateMessage(client, channel, ts, messageText, options);
-          console.log('Slack message updated.');
-        } catch (error) {
-          console.error('Failed to update Slack message:', error);
-        }
-      })()
-    );
+      try {
+        await updateMessage(client, channel, ts, messageText, options);
+      } catch (error) {
+        console.error('Failed to update Slack message:', error);
+      }
+    })()
+  );
 
-    // 並列タスク実行
-    try {
-      await Promise.all(tasks);
-      console.log('All tasks completed successfully.');
-    } catch (error) {
-      console.error('Error in one of the tasks:', error);
-    }
-  })();
+  // 並列タスク実行
+  try {
+    await Promise.all(tasks);
+  } catch (error) {
+    console.error('Error in one of the tasks:', error);
+  }
+  // })();
 
   console.log('▲ handleGoHome end');
 }
@@ -551,13 +546,9 @@ async function handleAddUser(payload) {
     }
 
     message = `*${userName}* さんのデータを追加しました！`;
-
-    console.log('User added successfully');
   } else {
     message = `*#${userId}#* さんのデータは既に存在しています。`;
   }
-
-  console.log(message);
 
   // モーダルを開いた際に保存したチャンネル情報を取得
   const privateMetadata = JSON.parse(payload.view.private_metadata || '{}');
