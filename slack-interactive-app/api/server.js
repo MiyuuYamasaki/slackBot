@@ -812,8 +812,6 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   //   console.error('Failed to update message:', error);
   // }
 
-  res.status(202).send('');
-
   // 関数を呼び出す
   (async () => {
     const channel = payload.channel.id;
@@ -828,6 +826,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
     try {
       await updateMessage(client, channel, ts, messageText, options);
+      res.status(202).send('');
     } catch (error) {
       console.error('Failed to update message:', error);
     }
@@ -905,8 +904,6 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   console.log('officeCount:' + officeCount);
   console.log('remoteCount:' + remoteCount);
 
-  res.status(202).send('');
-
   // 関数を呼び出す
   (async () => {
     const channel = payload.channel.id;
@@ -921,6 +918,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
     try {
       await updateMessage(client, channel, ts, messageText, options);
+      res.status(202).send('');
     } catch (error) {
       console.error('Failed to update message:', error);
     }
@@ -992,7 +990,6 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
   console.log('officeCount:remoteCount' + officeCount + ':' + remoteCount);
 
-  res.status(202).send('');
   // Slackメッセージ更新
   // 関数を呼び出す
   (async () => {
@@ -1008,6 +1005,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
 
     try {
       await updateMessage(client, channel, ts, messageText, options);
+      res.status(202).send('');
     } catch (error) {
       console.error('Failed to update message:', error);
     }
