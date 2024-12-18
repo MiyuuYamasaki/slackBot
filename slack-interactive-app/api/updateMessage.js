@@ -12,8 +12,7 @@
  * @returns {Promise<Object>} - Slack APIのレスポンス
  */
 async function updateMessage(client, channel, ts, messageText, options) {
-  // const { officeCount, remoteCount, existingRecord, leaveCheck = 0 } = options;
-  const { officeCount, remoteCount = 0 } = options;
+  const { officeCount, remoteCount } = options;
 
   const blocks = [
     {

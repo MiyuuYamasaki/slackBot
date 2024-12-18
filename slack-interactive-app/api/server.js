@@ -290,6 +290,115 @@ async function handleCreateList(payload, modalView, ymd) {
 }
 
 // 本社・在宅ボタン処理
+// async function handleWorkStyleChange(
+//   payload,
+//   action,
+//   userId,
+//   ymd,
+//   responseText
+// ) {
+//   console.log('▼ handleWorkStyleChange start');
+
+//   const workStyle = action === 'button_office' ? 'office' : 'remote';
+//   const workStylemessage = action === 'button_office' ? '本社勤務' : '在宅勤務';
+
+//   // 既にデータが存在するか確認
+//   const { data: existingRecord, error } = await supabase.rpc('get_query', {
+//     userid: String(userId),
+//   });
+
+//   if (error) {
+//     console.error('Error executing RPC:', error);
+//     throw error;
+//   }
+
+//   // 並列処理の準備
+//   const tasks = [];
+//   let user = userId;
+
+//   if (!existingRecord || existingRecord.length === 0) {
+//     // レコードが存在しない場合はINSERT
+//     tasks.push(
+//       supabase
+//         .from('Record')
+//         .insert([
+//           {
+//             ymd: ymd,
+//             user_id: userId,
+//             workStyle: workStyle,
+//             leaveCheck: 0,
+//           },
+//         ])
+//         .then(({ error }) => {
+//           if (error) throw error;
+//           console.log('Inserted new record for', userId);
+//         })
+//     );
+//   } else if (existingRecord[0].work_style !== workStyle) {
+//     // workStyleが異なる場合はUPDATE
+//     tasks.push(
+//       supabase
+//         .from('Record')
+//         .update({ workStyle: workStyle })
+//         .eq('id', existingRecord[0].record_id)
+//         .then(({ error }) => {
+//           if (error) throw error;
+//           console.log('Updated record for', userId);
+//         })
+//     );
+//   }
+
+//   // INSERT/UPDATE処理が完了した後にcount_queryを実行する
+//   Promise.all(tasks)
+//     .then(() => {
+//       // DBから最新の人数を取得
+//       return supabase.rpc('count_query');
+//     })
+//     .then(() => {
+//       let officeCount;
+//       let remoteCount;
+//       records.forEach((row) => {
+//         if (row.workstyle === 'office') {
+//           officeCount = row.countstyle || 0;
+//         } else if (row.workstyle === 'remote') {
+//           remoteCount = row.countstyle || 0;
+//         }
+//       });
+//       // メッセージ更新処理を並列タスクに追加
+//       (async () => {
+//         const channel = payload.channel.id;
+//         const ts = payload.message.ts;
+//         const messageText = payload.message?.text;
+//         const options = {
+//           officeCount: officeCount,
+//           remoteCount: remoteCount,
+//         };
+
+//         try {
+//           await updateMessage(client, channel, ts, messageText, options);
+//         } catch (error) {
+//           console.error('Failed to update message:', error);
+//         }
+//       })();
+//     })
+//     .catch((error) => {
+//       console.error('Error in processing insert/update or count_query:', error);
+//     });
+
+//   // 並列タスクを実行
+//   try {
+//     await Promise.all(tasks);
+//     responseText = `${user} さんが ${workStylemessage} を選択しました！`;
+//     postToThread(payload, responseText, false);
+//   } catch (error) {
+//     console.error('Error in one of the tasks:', error);
+//   }
+
+//   console.log('▲ handleWorkStyleChange end');
+// }
+
+// 本社・在宅ボタン処理
+// 本社・在宅ボタン処理
 async function handleWorkStyleChange(
   payload,
   action,
@@ -315,9 +424,6 @@ async function handleWorkStyleChange(
   // 並列処理の準備
   const tasks = [];
   let user = userId;
-
-  // tasks配列にINSERT/UPDATEの処理を追加
-  // const insertUpdateTasks = [];
 
   if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
@@ -352,142 +458,45 @@ async function handleWorkStyleChange(
   }
 
   // INSERT/UPDATE処理が完了した後にcount_queryを実行する
-  Promise.all(tasks)
-    .then(() => {
-      // DBから最新の人数を取得
-      return supabase.rpc('count_query');
-    })
-    .then(() => {
-      let officeCount;
-      let remoteCount;
-      records.forEach((row) => {
-        if (row.workstyle === 'office') {
-          officeCount = row.countstyle || 0;
-        } else if (row.workstyle === 'remote') {
-          remoteCount = row.countstyle || 0;
-        }
-      });
-      // メッセージ更新処理を並列タスクに追加
-      (async () => {
-        const channel = payload.channel.id;
-        const ts = payload.message.ts;
-        const messageText = payload.message?.text;
-        const options = {
-          officeCount: officeCount,
-          remoteCount: remoteCount,
-        };
-
-        try {
-          await updateMessage(client, channel, ts, messageText, options);
-        } catch (error) {
-          console.error('Failed to update message:', error);
-        }
-      })();
-    })
-    .catch((error) => {
-      console.error('Error in processing insert/update or count_query:', error);
-    });
-
-  // ユーザーが存在するか確認
-  // tasks.push(
-  //   supabase
-  //     .from('Users')
-  //     .select('code , name')
-  //     .eq('code', userId)
-  //     .single()
-  //     .then(({ data, error }) => {
-  //       if (error && error.code !== 'PGRST116') {
-  //         // 致命的なエラーの場合はthrow
-  //         throw error;
-  //       }
-
-  //       if (!data) {
-  //         // ユーザーが存在しない場合
-  //         responseText = ` ※ #${userId}# さんのデータが存在しません。追加しますか？`;
-  //         postToThread(payload, responseText, true);
-  //       } else {
-  //         // ユーザーが存在する場合
-  //         console.log('ユーザーが存在します: ', data);
-  //         user = data.name;
-  //       }
-  //     })
-  //     .catch((err) => {
-  //       // その他のエラーの処理
-  //       console.error('エラーが発生しました: ', err);
-  //     })
-  // );
-
-  // if (!existingRecord || existingRecord.length === 0) {
-  //   // レコードが存在しない場合はINSERT
-  //   tasks.push(
-  //     supabase
-  //       .from('Record')
-  //       .insert([
-  //         {
-  //           ymd: ymd,
-  //           user_id: userId,
-  //           workStyle: workStyle,
-  //           leaveCheck: 0,
-  //         },
-  //       ])
-  //       .then(({ error }) => {
-  //         if (error) throw error;
-  //         console.log('Inserted new record for', userId);
-  //       })
-  //   );
-  // } else if (existingRecord[0].work_style !== workStyle) {
-  //   // workStyleが異なる場合はUPDATE
-  //   tasks.push(
-  //     supabase
-  //       .from('Record')
-  //       .update({ workStyle: workStyle })
-  //       .eq('id', existingRecord[0].record_id)
-  //       .then(({ error }) => {
-  //         if (error) throw error;
-  //         console.log('Updated record for', userId);
-  //       })
-  //   );
-  // }
-
-  // tasks.push(
-  //   // DBから最新の人数を取得
-  //   supabase.rpc('count_query').then(() => {
-  //     let officeCount;
-  //     let remoteCount;
-  //     records.forEach((row) => {
-  //       if (row.workstyle === 'office') {
-  //         officeCount = row.countstyle || 0;
-  //       } else if (row.workstyle === 'remote') {
-  //         remoteCount = row.countstyle || 0;
-  //       }
-  //     });
-  //     // メッセージ更新処理を並列タスクに追加
-  //     (async () => {
-  //       const channel = payload.channel.id;
-  //       const ts = payload.message.ts;
-  //       const messageText = payload.message?.text;
-  //       const options = {
-  //         existingRecord: { workStyle: workStyle },
-  //         leaveCheck: existingRecord ? existingRecord[0].leave_check : 0,
-  //       };
-
-  //       try {
-  //         await updateMessage(client, channel, ts, messageText, options);
-  //       } catch (error) {
-  //         console.error('Failed to update message:', error);
-  //       }
-  //     })();
-  //   })
-  // );
-
-  // 並列タスクを実行
   try {
     await Promise.all(tasks);
+    // DBから最新の人数を取得
+    const { data: records, error: countError } = await supabase.rpc(
+      'count_query'
+    );
+    if (countError) {
+      throw countError;
+    }
+
+    let officeCount = 0;
+    let remoteCount = 0;
+    records.forEach((row) => {
+      if (row.workstyle === 'office') {
+        officeCount = row.countstyle || 0;
+      } else if (row.workstyle === 'remote') {
+        remoteCount = row.countstyle || 0;
+      }
+    });
+
+    // メッセージ更新処理を並列タスクに追加
+    const channel = payload.channel.id;
+    const ts = payload.message.ts;
+    const messageText = payload.message?.text;
+    const options = {
+      officeCount: officeCount,
+      remoteCount: remoteCount,
+    };
+
+    try {
+      await updateMessage(client, channel, ts, messageText, options);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+    }
+
     responseText = `${user} さんが ${workStylemessage} を選択しました！`;
-    console.log(responseText);
     postToThread(payload, responseText, false);
   } catch (error) {
-    console.error('Error in one of the tasks:', error);
+    console.error('Error in processing insert/update or count_query:', error);
   }
 
   console.log('▲ handleWorkStyleChange end');
@@ -595,8 +604,6 @@ async function handleGoHome(payload, userId, ymd, modalView) {
         const options = {
           officeCount: officeCount,
           remoteCount: remoteCount,
-          // existingRecord: { workStyle: record.workStyle },
-          // leaveCheck: leave_check,
         };
 
         try {
