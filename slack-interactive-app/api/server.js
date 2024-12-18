@@ -64,7 +64,7 @@ app.post('/slack/actions', async (req, res) => {
             handleGoHome(payload, messageText, userId, ymd);
           }
 
-          // res.status(200).send();
+          res.status(200).send();
         } catch (e) {
           console.log(action + '時にエラーが発生しました：' + e);
           res.status(400).send();
@@ -622,7 +622,6 @@ async function handleAddUser(payload, messageText) {
   });
 
   console.log('▲ usersAdd action end');
-  res.status(202).send('');
   // res.status(200).send();
 }
 
@@ -726,8 +725,6 @@ async function handleCreateList(payload, modalView, ymd) {
     ],
   };
 
-  res.status(202).send('');
-
   // モーダルウィンドウを開く
   await client.views.open({
     trigger_id: payload.trigger_id,
@@ -826,7 +823,6 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
     try {
       await updateMessage(client, channel, ts, messageText, options);
-      res.status(202).send('');
     } catch (error) {
       console.error('Failed to update message:', error);
     }
@@ -918,7 +914,6 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
 
     try {
       await updateMessage(client, channel, ts, messageText, options);
-      res.status(202).send('');
     } catch (error) {
       console.error('Failed to update message:', error);
     }
@@ -1005,7 +1000,6 @@ async function handleGoHome(payload, messageText, userId, ymd) {
 
     try {
       await updateMessage(client, channel, ts, messageText, options);
-      res.status(202).send('');
     } catch (error) {
       console.error('Failed to update message:', error);
     }
@@ -1062,8 +1056,6 @@ async function handleCallBack(payload) {
     console.error('Channel ID or Message TS is missing');
     return res.status(400).send('Channel or message reference missing');
   }
-
-  res.status(202).send('');
 
   //メッセージを更新
   await client.chat.update({
