@@ -365,11 +365,10 @@ async function handleWorkStyleChange(
     records.forEach((row) => {
       if (row.work_style === 'office') {
         officeCount = row.style_count || 0;
-        leaveCount = row.leave_count || 0;
       } else if (row.work_style === 'remote') {
         remoteCount = row.style_count || 0;
-        leaveCount = row.leave_count || 0;
       }
+      leaveCount = row.leave_count || 0;
     });
 
     // メッセージ更新処理を並列タスクに追加
@@ -438,7 +437,6 @@ async function postToThread(payload, responseText, isButton) {
       ],
     });
   }
-  console.log('▲ infoUsers end');
 }
 
 // 退勤ボタン処理
@@ -487,11 +485,10 @@ async function handleGoHome(payload, userId, ymd, modalView) {
       records.forEach((row) => {
         if (row.work_style === 'office') {
           officeCount = row.style_count || 0;
-          leaveCount = row.leave_count || 0;
         } else if (row.work_style === 'remote') {
           remoteCount = row.style_count || 0;
-          leaveCount = row.leave_count || 0;
         }
+        leaveCount = row.leave_count || 0;
       });
 
       (async () => {
