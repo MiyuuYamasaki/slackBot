@@ -734,22 +734,20 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   // console.log(`WorkStyle updated for ${userId}: ${workStyle}`);
 
   // 既にデータが存在するか確認
-  const { data: existingRecord } = await supabase.rpc('get_query', {
-    userid: userId,
+  const { data: existingRecord, error } = await supabase.rpc('get_query', {
+    userid: String(userId),
   });
+  if (error) {
+    console.error('Error executing RPC:', error);
+    throw error;
+  }
   console.log(userId + 'userId');
 
-  if (existingRecord) {
-    console.log('No record found.');
+  // データが正しく取得できているか確認
+  if (!existingRecord || existingRecord.length === 0) {
+    console.log('No record found for userId:', userId);
   } else {
-    console.log('Record found:', existingRecord);
-  }
-
-  if (existingRecord && existingRecord.code) {
-    console.log('User code:', existingRecord[0].code);
-    infoUsers(payload, userId);
-  } else {
-    console.log('No code found for the user.');
+    console.log('Query result:', existingRecord);
   }
 
   if (!existingRecord) {
