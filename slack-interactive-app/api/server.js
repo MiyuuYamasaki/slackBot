@@ -970,7 +970,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   const { error: updateError } = await supabase
     .from('Record')
     .update({ leaveCheck: leave_check })
-    .eq('id', record.record_id);
+    .eq('id', record.id);
 
   console.log(record);
   console.log('leaveCheck:' + leave_check);
