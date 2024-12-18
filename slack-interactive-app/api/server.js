@@ -24,7 +24,7 @@ app.use(bodyParser.json());
 // ボタンが押されたときの処理
 app.post('/slack/actions', async (req, res) => {
   // 先にレスポンスを返す
-  res.status(202).send('');
+  // res.status(202).send('');
   // callback(null, { statusCode: 200, body: '' });
 
   // 非同期処理を後から実行
@@ -622,6 +622,7 @@ async function handleAddUser(payload, messageText) {
   });
 
   console.log('▲ usersAdd action end');
+  res.status(202).send('');
   // res.status(200).send();
 }
 
@@ -725,6 +726,8 @@ async function handleCreateList(payload, modalView, ymd) {
     ],
   };
 
+  res.status(202).send('');
+
   // モーダルウィンドウを開く
   await client.views.open({
     trigger_id: payload.trigger_id,
@@ -809,6 +812,8 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   //   console.error('Failed to update message:', error);
   // }
 
+  res.status(202).send('');
+
   // 関数を呼び出す
   (async () => {
     const channel = payload.channel.id;
@@ -861,14 +866,13 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     console.log('No record found for userId:', userId);
   } else {
     console.log('Query result:', existingRecord);
-    console.log(existingRecord[0].code);
   }
 
-  // if (!existingRecord.code) {
-  //   infoUsers(payload, userId);
-  // } else {
-  //   console.log('Hello.' + existingRecord.user_id);
-  // }
+  if (!existingRecord[0].code) {
+    infoUsers(payload, userId);
+  } else {
+    console.log('Hello.' + existingRecord.user_id);
+  }
 
   if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
@@ -900,6 +904,9 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
   console.log('officeCount:' + officeCount);
   console.log('remoteCount:' + remoteCount);
+
+  res.status(202).send('');
+
   // 関数を呼び出す
   (async () => {
     const channel = payload.channel.id;
@@ -985,6 +992,7 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
   console.log('officeCount:remoteCount' + officeCount + ':' + remoteCount);
 
+  res.status(202).send('');
   // Slackメッセージ更新
   // 関数を呼び出す
   (async () => {
@@ -1056,6 +1064,8 @@ async function handleCallBack(payload) {
     console.error('Channel ID or Message TS is missing');
     return res.status(400).send('Channel or message reference missing');
   }
+
+  res.status(202).send('');
 
   //メッセージを更新
   await client.chat.update({
