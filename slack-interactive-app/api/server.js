@@ -43,7 +43,7 @@ app.post('/slack/actions', async (req, res) => {
       let modalView;
 
       if (action === 'button_add') {
-        await handleAddUser(payload, messageText);
+        await handleUserModal(payload, messageText);
       } else {
         // メインメッセージから日付を取得
         const ymdMatch = messageText.match(/(\d{4}\/\d{2}\/\d{2})/);
@@ -81,7 +81,7 @@ app.post('/slack/actions', async (req, res) => {
       console.log('▼ callback action start');
       const callbackId = payload.view?.callback_id;
 
-      if (callbackId === 'add_user_modal') await handleCallBack(payload);
+      if (callbackId === 'add_user_modal') await handleAddUser(payload);
     }
   } catch (error) {
     console.error('Error handling action:', error);
@@ -102,8 +102,8 @@ function getTodaysDate() {
   return `${year}-${month}-${day}`;
 }
 
-// ユーザー情報を追加
-async function handleAddUser(payload, messageText) {
+// User情報入力モーダルを表示
+async function handleUserModal(payload, messageText) {
   console.log('▼ usersAdd action start');
 
   // メッセージから #タグ内のUserID を抽出
@@ -294,22 +294,18 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
     console.error('Error executing RPC:', error);
     throw error;
   }
-  console.log(userId + 'userId');
 
   // データが正しく取得できているか確認
-  if (
-    !existingRecord ||
-    (Array.isArray(existingRecord) && existingRecord.length === 0)
-  ) {
+  if (!existingRecord || existingRecord.length === 0) {
     console.log('No record found for userId:', userId);
   } else {
     console.log('Query result:', existingRecord);
   }
 
-  if (
-    !existingRecord ||
-    (Array.isArray(existingRecord) && existingRecord.length === 0)
-  ) {
+  // ユーザが存在しない場合スレッドへ送信
+  if (!existingRecord[0].code === userId) infoUsers(payload, userId);
+
+  if (!existingRecord || existingRecord.length === 0) {
     // レコードが存在しない場合はINSERT
     const { error: insertError } = await supabase.from('Record').insert([
       {
@@ -337,22 +333,6 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   const { data: records } = await supabase.rpc('custom_query');
   const officeCount = records.filter((r) => r.work_style === 'office').length;
   const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-
-  // // 関数を呼び出す
-  // const channel = payload.channel.id;
-  // const ts = payload.message.ts;
-  // const options = {
-  //   officeCount: officeCount,
-  //   remoteCount: remoteCount,
-  //   existingRecord: { workStyle: workStyle },
-  //   leaveCheck: existingRecord[0].leave_check || 0,
-  // };
-
-  // try {
-  //   await updateMessage(client, channel, ts, messageText, options);
-  // } catch (error) {
-  //   console.error('Failed to update message:', error);
-  // }
 
   // 関数を呼び出す
   (async () => {
@@ -376,98 +356,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   console.log('▲ handleWorkStyleChange end');
 }
 
-async function handleWorkStyleChange(payload, action, messageText, userId) {
-  console.log('▼ handleWorkStyleChange start');
-
-  // Userが存在するか確認
-  // const { data: userDate } = await supabase
-  //   .from('Users')
-  //   .select('*')
-  //   .eq('code', userId)
-  //   .single();
-
-  const workStyle = action === 'button_office' ? 'office' : 'remote';
-  // await supabase.from('Record').upsert([{ ymd, user_id: userId, workStyle }]);
-  // console.log(`WorkStyle updated for ${userId}: ${workStyle}`);
-
-  // 既にデータが存在するか確認
-  const { data: existingRecord, error } = await supabase.rpc('get_query', {
-    // userid: String(userId),
-    userid: userId,
-  });
-  if (error) {
-    console.error('Error executing RPC:', error);
-    throw error;
-  }
-  console.log(userId + 'userId');
-
-  // データが正しく取得できているか確認
-  if (!existingRecord || existingRecord.length === 0) {
-    console.log('No record found for userId:', userId);
-  } else {
-    console.log('Query result:', existingRecord);
-  }
-
-  if (!existingRecord[0].code) {
-    infoUsers(payload, userId);
-  } else {
-    console.log('Hello.' + existingRecord.user_id);
-  }
-
-  if (!existingRecord || existingRecord.length === 0) {
-    // レコードが存在しない場合はINSERT
-    const { error: insertError } = await supabase.from('Record').insert([
-      {
-        ymd,
-        user_id: userId,
-        workStyle: workStyle,
-        leaveCheck: 0,
-      },
-    ]);
-
-    if (insertError) throw insertError;
-    console.log('Inserted new record for', userId);
-  } else if (existingRecord[0].work_style !== workStyle) {
-    // workStyleが異なる場合はUPDATE
-    const { error: updateError } = await supabase
-      .from('Record')
-      .update({ workStyle: workStyle })
-      .eq('id', existingRecord[0].record_id);
-
-    if (updateError) throw updateError;
-    console.log('Updated record for', userId);
-  }
-
-  // DBから最新の人数を取得
-  const { data: records } = await supabase.rpc('custom_query');
-  const officeCount = records.filter((r) => r.work_style === 'office').length;
-  const remoteCount = records.filter((r) => r.work_style === 'remote').length;
-  console.log('officeCount:' + officeCount);
-  console.log('remoteCount:' + remoteCount);
-
-  // 関数を呼び出す
-  (async () => {
-    const channel = payload.channel.id;
-    const ts = payload.message.ts;
-    const messageText = payload.message?.text;
-    const options = {
-      officeCount: officeCount,
-      remoteCount: remoteCount,
-      existingRecord: { workStyle: workStyle },
-      leaveCheck: existingRecord[0].leave_check || 0,
-    };
-
-    try {
-      await updateMessage(client, channel, ts, messageText, options);
-    } catch (error) {
-      console.error('Failed to update message:', error);
-    }
-  })();
-
-  console.log('▲ handleWorkStyleChange end');
-  // res.status(200).send();
-}
-
+// ユーザコードをスレッドに送信
 async function infoUsers(payload, userId) {
   let responseText = `*#${userId}#* さんのデータが存在しません。追加しますか？`;
 
@@ -553,7 +442,8 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   console.log('▲ handleGoHome end');
 }
 
-async function handleCallBack(payload) {
+// User追加処理
+async function handleAddUser(payload) {
   console.log('▼ add user action start');
   // モーダルから入力された値を取得
   const userId = payload.view.state.values.user_id_block.user_id_input.value;
