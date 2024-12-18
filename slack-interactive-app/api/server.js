@@ -301,7 +301,14 @@ app.post('/slack/actions', async (req, res) => {
                 // レコードが存在しない場合はINSERT
                 const { error: insertError } = await supabase
                   .from('Record')
-                  .insert([{ ymd, user_id: userId, workStyle: workStyle }]);
+                  .insert([
+                    {
+                      ymd,
+                      user_id: userId,
+                      workStyle: workStyle,
+                      leaveCheck: 0,
+                    },
+                  ]);
 
                 if (insertError) throw insertError;
                 console.log('Inserted new record for', userId);
