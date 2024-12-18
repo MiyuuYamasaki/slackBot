@@ -344,7 +344,7 @@ async function handleWorkStyleChange(payload, action, messageText, userId) {
   let remoteCount;
 
   // 結果を処理
-  records.rows.forEach((row) => {
+  records.forEach((row) => {
     if (row.workstyle === 'office') {
       officeCount = row.countstyle;
     } else if (row.workstyle === 'remote') {
@@ -445,8 +445,10 @@ async function handleGoHome(payload, messageText, userId, ymd) {
   let officeCount;
   let remoteCount;
 
+  console.log(records);
+
   // 結果を処理
-  records.rows.forEach((row) => {
+  records.forEach((row) => {
     if (row.workstyle === 'office') {
       officeCount = row.countstyle;
     } else if (row.workstyle === 'remote') {
