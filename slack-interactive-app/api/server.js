@@ -378,42 +378,41 @@ async function handleWorkStyleChange(
   // INSERT/UPDATE処理が完了した後にcount_queryを実行する
   try {
     await Promise.all(tasks);
-    countDate(payload);
     // DBから最新の人数を取得
-    // const { data: records, error: countError } = await supabase.rpc(
-    //   'count_query'
-    // );
-    // if (countError) {
-    //   throw countError;
-    // }
+    const { data: records, error: countError } = await supabase.rpc(
+      'count_query'
+    );
+    if (countError) {
+      throw countError;
+    }
 
-    // let officeCount = 0;
-    // let remoteCount = 0;
-    // let leaveCount = 0;
-    // records.forEach((row) => {
-    //   if (row.work_style === 'office') {
-    //     officeCount = row.style_count || 0;
-    //   } else if (row.work_style === 'remote') {
-    //     remoteCount = row.style_count || 0;
-    //   }
-    //   leaveCount += row.leave_count || 0;
-    // });
+    let officeCount = 0;
+    let remoteCount = 0;
+    let leaveCount = 0;
+    records.forEach((row) => {
+      if (row.work_style === 'office') {
+        officeCount = row.style_count || 0;
+      } else if (row.work_style === 'remote') {
+        remoteCount = row.style_count || 0;
+      }
+      leaveCount += row.leave_count || 0;
+    });
 
-    // // メッセージ更新処理を並列タスクに追加
-    // const channel = payload.channel.id;
-    // const ts = payload.message.ts;
-    // const messageText = payload.message?.text;
-    // const options = {
-    //   officeCount: officeCount,
-    //   remoteCount: remoteCount,
-    //   leaveCount: leaveCount,
-    // };
+    // メッセージ更新処理を並列タスクに追加
+    const channel = payload.channel.id;
+    const ts = payload.message.ts;
+    const messageText = payload.message?.text;
+    const options = {
+      officeCount: officeCount,
+      remoteCount: remoteCount,
+      leaveCount: leaveCount,
+    };
 
-    // try {
-    //   await updateMessage(client, channel, ts, messageText, options);
-    // } catch (error) {
-    //   console.error('Failed to update message:', error);
-    // }
+    try {
+      await updateMessage(client, channel, ts, messageText, options);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+    }
 
     responseText = `${user} さんが ${workStylemessage} を選択しました！`;
     postToThread(payload, responseText, false);
@@ -504,82 +503,41 @@ async function handleGoHome(payload, userId, ymd, modalView) {
   // UPDATE処理が完了した後にcount_queryを実行する
   try {
     await Promise.all(tasks);
-    countDate(payload);
     // DBから最新の人数を取得
-    // const { data: records, error: countError } = await supabase.rpc(
-    //   'count_query'
-    // );
-    // if (countError) {
-    //   throw countError;
-    // }
-    // let officeCount = 0;
-    // let remoteCount = 0;
-    // let leaveCount = 0;
-    // records.forEach((row) => {
-    //   if (row.work_style === 'office') {
-    //     officeCount = row.style_count || 0;
-    //   } else if (row.work_style === 'remote') {
-    //     remoteCount = row.style_count || 0;
-    //   }
-    //   leaveCount += row.leave_count || 0;
-    // });
-    // // メッセージ更新処理を並列タスクに追加
-    // const channel = payload.channel.id;
-    // const ts = payload.message.ts;
-    // const messageText = payload.message?.text;
-    // const options = {
-    //   officeCount: officeCount,
-    //   remoteCount: remoteCount,
-    //   leaveCount: leaveCount,
-    // };
-    // try {
-    //   await updateMessage(client, channel, ts, messageText, options);
-    // } catch (error) {
-    //   console.error('Failed to update message:', error);
-    // }
+    const { data: records, error: countError } = await supabase.rpc(
+      'count_query'
+    );
+    if (countError) {
+      throw countError;
+    }
+    let officeCount = 0;
+    let remoteCount = 0;
+    let leaveCount = 0;
+    records.forEach((row) => {
+      if (row.work_style === 'office') {
+        officeCount = row.style_count || 0;
+      } else if (row.work_style === 'remote') {
+        remoteCount = row.style_count || 0;
+      }
+      leaveCount += row.leave_count || 0;
+    });
+    // メッセージ更新処理を並列タスクに追加
+    const channel = payload.channel.id;
+    const ts = payload.message.ts;
+    const messageText = payload.message?.text;
+    const options = {
+      officeCount: officeCount,
+      remoteCount: remoteCount,
+      leaveCount: leaveCount,
+    };
+    try {
+      await updateMessage(client, channel, ts, messageText, options);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+    }
   } catch (e) {}
 
   console.log('▲ handleGoHome end');
-}
-
-// 人数をカウントし、メッセージ更新
-async function countDate(payload) {
-  // カウント用クエリを実行
-  //// supabase下記実行でクエリ詳細確認
-  //// SELECT * FROM pg_proc WHERE proname = 'count_query';
-  const { data: records, error: countError } = await supabase.rpc(
-    'count_query'
-  );
-  if (countError) {
-    throw countError;
-  }
-
-  // それぞれの人数をカウント
-  let officeCount = 0;
-  let remoteCount = 0;
-  let leaveCount = 0;
-  records.forEach((row) => {
-    if (row.work_style === 'office') {
-      officeCount = row.style_count || 0;
-    } else if (row.work_style === 'remote') {
-      remoteCount = row.style_count || 0;
-    }
-    leaveCount += row.leave_count || 0;
-  });
-  // メッセージ更新処理を並列タスクに追加
-  const channel = payload.channel.id;
-  const ts = payload.message.ts;
-  const messageText = payload.message?.text;
-  const options = {
-    officeCount: officeCount,
-    remoteCount: remoteCount,
-    leaveCount: leaveCount,
-  };
-  try {
-    await updateMessage(client, channel, ts, messageText, options);
-  } catch (error) {
-    console.error('Failed to update message:', error);
-  }
 }
 
 // User追加処理
