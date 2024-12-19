@@ -30,7 +30,6 @@ async function updateMessage(client, channel, ts, messageText, options) {
           text: {
             type: 'plain_text',
             text: `🏢 本社勤務 (${officeCount})`,
-            // text: '🏢 本社勤務 ',
             emoji: true,
           },
           action_id: 'button_office',
@@ -40,7 +39,6 @@ async function updateMessage(client, channel, ts, messageText, options) {
           text: {
             type: 'plain_text',
             text: `🏠 在宅勤務 (${remoteCount})`,
-            // text: '🏠 在宅勤務 ',
             emoji: true,
           },
           action_id: 'button_remote',

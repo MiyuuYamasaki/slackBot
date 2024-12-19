@@ -68,7 +68,7 @@ app.post('/slack/actions', async (req, res) => {
             );
           } else if (action === 'button_goHome') {
             // 退勤チェック
-            await handleGoHome(payload, userId, ymd, modalView);
+            await handleGoHome(payload, userId, ymd, modalView, responseText);
           }
 
           // レスポンスを返す
@@ -209,7 +209,85 @@ async function openModal(payload, modalView, message) {
   });
 }
 
-// 一覧ボタンクリック時
+// // 一覧ボタンクリック時
+// async function handleCreateList(payload, modalView, ymd) {
+//   console.log('▼ handleCreateList start');
+
+//   // クエリを実行してデータを取得
+//   const { data: records } = await supabase.rpc('custom_query');
+
+//   // データを分類
+//   const officeUsers =
+//     records
+//       .filter((record) => record.work_style === 'office')
+//       .map((record) => {
+//         // leaveCheckが奇数の場合に「退勤済」を追加
+//         return `<@${record.user_name}>${
+//           record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+//         }`;
+//       })
+//       .join('\n') || 'なし';
+
+//   const remoteUsers =
+//     records
+//       .filter((record) => record.work_style === 'remote')
+//       .map((record) => {
+//         return `<@${record.user_name}>${
+//           record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+//         }`;
+//       })
+//       .join('\n') || 'なし';
+
+//   const vacationUsers =
+//     records
+//       .filter((record) => record.work_style === '休暇')
+//       .map((record) => {
+//         return `<@${record.user_name}>${
+//           record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
+//         }`;
+//       })
+//       .join('\n') || 'なし';
+
+//   // 一覧表示のモーダルウィンドウを作成
+//   modalView = {
+//     type: 'modal',
+//     callback_id: 'work_status_modal',
+//     title: {
+//       type: 'plain_text',
+//       text: `${ymd} 勤務状況一覧`,
+//     },
+//     blocks: [
+//       {
+//         type: 'section',
+//         text: {
+//           type: 'mrkdwn',
+//           text: `🏢 *本社勤務:*\n${officeUsers}`,
+//         },
+//       },
+//       {
+//         type: 'section',
+//         text: {
+//           type: 'mrkdwn',
+//           text: `🏠 *在宅勤務:*\n${remoteUsers}`,
+//         },
+//       },
+//       {
+//         type: 'section',
+//         text: {
+//           type: 'mrkdwn',
+//           text: `💤 *休暇(回答無):*\n${vacationUsers}`,
+//         },
+//       },
+//     ],
+//   };
+
+//   // モーダルウィンドウを開く
+//   await client.views.open({
+//     trigger_id: payload.trigger_id,
+//     view: modalView,
+//   });
+//   console.log('▲ handleCreateList end');
+// }
 async function handleCreateList(payload, modalView, ymd) {
   console.log('▼ handleCreateList start');
 
@@ -217,36 +295,29 @@ async function handleCreateList(payload, modalView, ymd) {
   const { data: records } = await supabase.rpc('custom_query');
 
   // データを分類
-  const officeUsers =
-    records
-      .filter((record) => record.work_style === 'office')
+  const officeUsers = records.filter(
+    (record) => record.work_style === 'office'
+  );
+  const remoteUsers = records.filter(
+    (record) => record.work_style === 'remote'
+  );
+  const vacationUsers = records.filter(
+    (record) => record.work_style === '休暇'
+  );
+
+  // ユーザー名リストを生成
+  const formatUsers = (users) =>
+    users
       .map((record) => {
-        // leaveCheckが奇数の場合に「退勤済」を追加
         return `<@${record.user_name}>${
           record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
         }`;
       })
       .join('\n') || 'なし';
 
-  const remoteUsers =
-    records
-      .filter((record) => record.work_style === 'remote')
-      .map((record) => {
-        return `<@${record.user_name}>${
-          record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-        }`;
-      })
-      .join('\n') || 'なし';
-
-  const vacationUsers =
-    records
-      .filter((record) => record.work_style === '休暇')
-      .map((record) => {
-        return `<@${record.user_name}>${
-          record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-        }`;
-      })
-      .join('\n') || 'なし';
+  const officeList = formatUsers(officeUsers);
+  const remoteList = formatUsers(remoteUsers);
+  const vacationList = formatUsers(vacationUsers);
 
   // 一覧表示のモーダルウィンドウを作成
   modalView = {
@@ -261,21 +332,21 @@ async function handleCreateList(payload, modalView, ymd) {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `🏢 *本社勤務:*\n${officeUsers}`,
+          text: `🏢 *本社勤務 (${officeUsers.length}名):*\n${officeList}`,
         },
       },
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `🏠 *在宅勤務:*\n${remoteUsers}`,
+          text: `🏠 *在宅勤務 (${remoteUsers.length}名):*\n${remoteList}`,
         },
       },
       {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `💤 *休暇(回答無):*\n${vacationUsers}`,
+          text: `💤 *休暇 (${vacationUsers.length}名):*\n${vacationList}`,
         },
       },
     ],
@@ -286,6 +357,7 @@ async function handleCreateList(payload, modalView, ymd) {
     trigger_id: payload.trigger_id,
     view: modalView,
   });
+
   console.log('▲ handleCreateList end');
 }
 
@@ -467,37 +539,56 @@ async function postToThread(payload, responseText, isButton) {
 }
 
 // 退勤ボタン処理
-async function handleGoHome(payload, userId, ymd, modalView) {
+async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   console.log('▼ handleGoHome start');
 
   // 退勤状態のトグル
-  const { data: record } = await supabase
-    .from('Record')
-    .select('*')
-    .eq('ymd', ymd)
-    .eq('user_id', userId)
-    .single();
+  const { data: record } = await supabase.rpc('getUser_query', {
+    userid: String(userId),
+  });
+  // .from('Record')
+  // .select('*')
+  // .eq('ymd', ymd)
+  // .eq('user_id', userId)
+  // .single();
 
-  if (!record) {
+  // if (!record) {
+  if (!record || record.length === 0) {
     message = `未だ出勤していません。本社勤務・在宅勤務を選択してください。`;
     openModal(payload, modalView, message);
     return;
   }
 
-  let leave_check = (record.leaveCheck || 0) + 1;
+  // let leave_check = (record.leaveCheck || 0) + 1;
+  let leave_check = (record[0].leaveCheck || 0) + 1;
 
   const tasks = [];
+  let user = userId;
 
   // leaveCheckの更新
   tasks.push(
     supabase
       .from('Record')
       .update({ leaveCheck: leave_check })
-      .eq('id', record.id)
+      // .eq('id', record.id)
+      .eq('id', record[0].id)
       .then(({ error }) => {
         if (error) throw error;
-        console.log('Updated leaveCheck for record ID:', record.id);
+        // console.log('Updated leaveCheck for record ID:', record.id);
+        console.log('Updated leaveCheck for record ID:', record[0].id);
       })
+  );
+
+  // スレッド返信 2024.12.19 miyu add
+  tasks.push(
+    (async () => {
+      const action =
+        leave_check % 2 === 0 ? '退勤しました。' : '退勤を取り消しました。';
+      user = record[0].name;
+      console.log(user);
+      const responseText = `${user} さんが ${action}`;
+      await postToThread(payload, responseText);
+    })()
   );
 
   // UPDATE処理が完了した後にcount_queryを実行する
