@@ -499,8 +499,6 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
       .eq('id', record[0].id)
       .then(({ error }) => {
         if (error) throw error;
-        // console.log('Updated leaveCheck for record ID:', record.id);
-        console.log('Updated leaveCheck for record ID:', record[0].id);
       })
   );
 
@@ -508,11 +506,15 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   tasks.push(
     (async () => {
       const leaveAction =
-        leave_check % 2 === 0 ? '退勤しました。' : '退勤を取り消しました。';
+        leaveCheck % 2 === 0 ? '退勤しました。' : '退勤を取り消しました。';
       user = record[0].user_name;
       console.log(user);
       responseText = `${user} さんが ${leaveAction}`;
-      await postToThread(payload, responseText, false);
+      try {
+        await postToThread(payload, responseText, false);
+      } catch (error) {
+        console.error('Error posting to thread:', error);
+      }
     })()
   );
 
@@ -551,7 +553,9 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
     } catch (error) {
       console.error('Failed to update message:', error);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('Error in handleGoHome:', e);
+  }
 
   console.log('▲ handleGoHome end');
 }
