@@ -501,50 +501,86 @@ async function handleGoHome(payload, userId, ymd, modalView) {
   );
 
   // DBから最新の人数を取得（必要ならアンコメント）
-  tasks.push(
-    supabase.rpc('count_query').then(({ data: records, error }) => {
-      if (error) throw error;
+  // tasks.push(
+  //   supabase.rpc('count_query').then(({ data: records, error }) => {
+  //     if (error) throw error;
 
-      let officeCount = 0;
-      let remoteCount = 0;
-      let leaveCount = 0;
+  //     let officeCount = 0;
+  //     let remoteCount = 0;
+  //     let leaveCount = 0;
 
-      records.forEach((row) => {
-        if (row.work_style === 'office') {
-          officeCount = row.style_count || 0;
-        } else if (row.work_style === 'remote') {
-          remoteCount = row.style_count || 0;
-        }
-        leaveCount += row.leave_count || 0;
-        console.log(leaveCount);
-      });
+  //     records.forEach((row) => {
+  //       if (row.work_style === 'office') {
+  //         officeCount = row.style_count || 0;
+  //       } else if (row.work_style === 'remote') {
+  //         remoteCount = row.style_count || 0;
+  //       }
+  //       leaveCount += row.leave_count || 0;
+  //       console.log(leaveCount);
+  //     });
 
-      (async () => {
-        const channel = payload.channel.id;
-        const ts = payload.message.ts;
-        const messageText = payload.message?.text;
+  //     (async () => {
+  //       const channel = payload.channel.id;
+  //       const ts = payload.message.ts;
+  //       const messageText = payload.message?.text;
 
-        const options = {
-          officeCount: officeCount,
-          remoteCount: remoteCount,
-          leaveCount: leaveCount,
-        };
+  //       const options = {
+  //         officeCount: officeCount,
+  //         remoteCount: remoteCount,
+  //         leaveCount: leaveCount,
+  //       };
 
-        try {
-          await updateMessage(client, channel, ts, messageText, options);
-        } catch (error) {
-          console.error('Failed to update Slack message:', error);
-        }
-      })();
-    })
-  );
+  //       try {
+  //         await updateMessage(client, channel, ts, messageText, options);
+  //       } catch (error) {
+  //         console.error('Failed to update Slack message:', error);
+  //       }
 
-  // 並列タスク実行
+  //     })();
+
+  // INSERT/UPDATE処理が完了した後にcount_queryを実行する
   try {
     await Promise.all(tasks);
-  } catch (error) {
-    console.error('Error in one of the tasks:', error);
-  }
+    // DBから最新の人数を取得
+    const { data: records, error: countError } = await supabase.rpc(
+      'count_query'
+    );
+    if (countError) {
+      throw countError;
+    }
+    let officeCount = 0;
+    let remoteCount = 0;
+    let leaveCount = 0;
+    records.forEach((row) => {
+      if (row.work_style === 'office') {
+        officeCount = row.style_count || 0;
+      } else if (row.work_style === 'remote') {
+        remoteCount = row.style_count || 0;
+      }
+      leaveCount += row.leave_count || 0;
+    });
+    // メッセージ更新処理を並列タスクに追加
+    const channel = payload.channel.id;
+    const ts = payload.message.ts;
+    const messageText = payload.message?.text;
+    const options = {
+      officeCount: officeCount,
+      remoteCount: remoteCount,
+      leaveCount: leaveCount,
+    };
+    try {
+      await updateMessage(client, channel, ts, messageText, options);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+    }
+  } catch (e) {}
+
+  // 並列タスク実行
+  // try {
+  //   await Promise.all(tasks);
+  // } catch (error) {
+  //   console.error('Error in one of the tasks:', error);
+  // }
 
   console.log('▲ handleGoHome end');
 }
