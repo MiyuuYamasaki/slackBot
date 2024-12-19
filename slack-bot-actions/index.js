@@ -2,7 +2,7 @@ const { WebClient } = require('@slack/web-api');
 
 // Slackのトークンを環境変数から取得
 const SLACK_TOKEN = process.env.SLACK_TOKEN;
-const CHANNEL_ID = 'C083QUBKU9L'; // 送信先のチャンネルID
+const CHANNEL_ID = 'C07HLMDLB1U'; // 送信先のチャンネルID
 
 // 日付のフォーマットを変更
 function getFormattedDate() {
