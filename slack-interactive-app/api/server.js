@@ -552,9 +552,11 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   // .eq('user_id', userId)
   // .single();
 
-  console.log(record);
+  console.log('RPC result:', record);
+  console.error('RPC error:', error);
+
   // if (!record) {
-  if (!record[0].id) {
+  if (!record || record.length === 0 || !record[0].id) {
     message = `未だ出勤していません。本社勤務・在宅勤務を選択してください。`;
     openModal(payload, modalView, message);
     return;
@@ -583,11 +585,11 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   // スレッド返信 2024.12.19 miyu add
   tasks.push(
     (async () => {
-      const action =
+      const leaveAction =
         leave_check % 2 === 0 ? '退勤しました。' : '退勤を取り消しました。';
       user = record[0].user_name;
       console.log(user);
-      const responseText = `${user} さんが ${action}`;
+      responseText = `${user} さんが ${leaveAction}`;
       await postToThread(payload, responseText);
     })()
   );
