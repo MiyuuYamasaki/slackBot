@@ -516,6 +516,7 @@ async function handleGoHome(payload, userId, ymd, modalView) {
           remoteCount = row.style_count || 0;
         }
         leaveCount += row.leave_count || 0;
+        console.log(leaveCount);
       });
 
       (async () => {
