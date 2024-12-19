@@ -543,7 +543,7 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   console.log('▼ handleGoHome start');
 
   // 退勤状態のトグル
-  const { data: record, error } = await supabase.rpc('getUser_query', {
+  const { data: record, error } = await supabase.rpc('getuser_query', {
     userid: String(userId),
   });
   console.log(userId);
@@ -593,7 +593,7 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
       user = record[0].user_name;
       console.log(user);
       responseText = `${user} さんが ${leaveAction}`;
-      await postToThread(payload, responseText);
+      await postToThread(payload, responseText, false);
     })()
   );
 
