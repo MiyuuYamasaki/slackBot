@@ -68,7 +68,13 @@ app.post('/slack/actions', async (req, res) => {
             );
           } else if (action === 'button_goHome') {
             // 退勤チェック
-            await handleGoHome(payload, userId, ymd, modalView, responseText);
+            await handleGoHome(
+              payload,
+              userId,
+              message,
+              modalView,
+              responseText
+            );
           }
 
           // レスポンスを返す
@@ -461,14 +467,13 @@ async function postToThread(payload, responseText, isButton) {
 }
 
 // 退勤ボタン処理
-async function handleGoHome(payload, userId, ymd, modalView, responseText) {
+async function handleGoHome(payload, userId, message, modalView, responseText) {
   console.log('▼ handleGoHome start');
 
   // 退勤状態のトグル
   const { data: record } = await supabase.rpc('getuser_query', {
     userid: String(userId),
   });
-  console.log(userId);
 
   if (!record || record.length === 0 || !record[0].id) {
     message = `未だ出勤していません。本社勤務・在宅勤務を選択してください。`;
@@ -498,7 +503,6 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
       const leaveAction =
         leaveCheck % 2 === 0 ? '退勤を取り消しました。' : '退勤しました。';
       user = record[0].user_name;
-      console.log(user);
       responseText = `${user} さんが ${leaveAction}`;
       try {
         await postToThread(payload, responseText, false);
