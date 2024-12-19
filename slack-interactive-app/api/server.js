@@ -552,6 +552,7 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   // .eq('user_id', userId)
   // .single();
 
+  console.log(record);
   // if (!record) {
   if (!record || record.length === 0) {
     message = `未だ出勤していません。本社勤務・在宅勤務を選択してください。`;
