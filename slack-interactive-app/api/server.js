@@ -543,14 +543,17 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   console.log('▼ handleGoHome start');
 
   // 退勤状態のトグル
-  const { data: record } = await supabase.rpc('getUser_query', {
+  const { data: record, error } = await supabase.rpc('getUser_query', {
     userid: String(userId),
   });
+  console.log(userId);
   // .from('Record')
   // .select('*')
   // .eq('ymd', ymd)
   // .eq('user_id', userId)
   // .single();
+
+  if (error) console.log('ERROR:' + error);
 
   console.log('RPC result:', record);
   console.error('RPC error:', error);
