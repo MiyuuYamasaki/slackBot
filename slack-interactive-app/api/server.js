@@ -469,22 +469,13 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
     userid: String(userId),
   });
   console.log(userId);
-  // .from('Record')
-  // .select('*')
-  // .eq('ymd', ymd)
-  // .eq('user_id', userId)
-  // .single();
 
-  console.log('RPC result:', record);
-
-  // if (!record) {
   if (!record || record.length === 0 || !record[0].id) {
     message = `未だ出勤していません。本社勤務・在宅勤務を選択してください。`;
     openModal(payload, modalView, message);
     return;
   }
 
-  // let leave_check = (record.leaveCheck || 0) + 1;
   let leaveCheck = (record[0].leave_check || 0) + 1;
 
   const tasks = [];
@@ -495,7 +486,6 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
     supabase
       .from('Record')
       .update({ leaveCheck: leaveCheck })
-      // .eq('id', record.id)
       .eq('id', record[0].id)
       .then(({ error }) => {
         if (error) throw error;
@@ -506,7 +496,7 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   tasks.push(
     (async () => {
       const leaveAction =
-        leaveCheck % 2 === 0 ? '退勤しました。' : '退勤を取り消しました。';
+        leaveCheck % 2 === 0 ? '退勤を取り消しました。' : '退勤しました。';
       user = record[0].user_name;
       console.log(user);
       responseText = `${user} さんが ${leaveAction}`;
