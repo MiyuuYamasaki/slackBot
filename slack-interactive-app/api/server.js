@@ -209,85 +209,7 @@ async function openModal(payload, modalView, message) {
   });
 }
 
-// // 一覧ボタンクリック時
-// async function handleCreateList(payload, modalView, ymd) {
-//   console.log('▼ handleCreateList start');
-
-//   // クエリを実行してデータを取得
-//   const { data: records } = await supabase.rpc('custom_query');
-
-//   // データを分類
-//   const officeUsers =
-//     records
-//       .filter((record) => record.work_style === 'office')
-//       .map((record) => {
-//         // leaveCheckが奇数の場合に「退勤済」を追加
-//         return `<@${record.user_name}>${
-//           record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-//         }`;
-//       })
-//       .join('\n') || 'なし';
-
-//   const remoteUsers =
-//     records
-//       .filter((record) => record.work_style === 'remote')
-//       .map((record) => {
-//         return `<@${record.user_name}>${
-//           record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-//         }`;
-//       })
-//       .join('\n') || 'なし';
-
-//   const vacationUsers =
-//     records
-//       .filter((record) => record.work_style === '休暇')
-//       .map((record) => {
-//         return `<@${record.user_name}>${
-//           record.leave_check % 2 !== 0 ? ' (退勤済)' : ''
-//         }`;
-//       })
-//       .join('\n') || 'なし';
-
-//   // 一覧表示のモーダルウィンドウを作成
-//   modalView = {
-//     type: 'modal',
-//     callback_id: 'work_status_modal',
-//     title: {
-//       type: 'plain_text',
-//       text: `${ymd} 勤務状況一覧`,
-//     },
-//     blocks: [
-//       {
-//         type: 'section',
-//         text: {
-//           type: 'mrkdwn',
-//           text: `🏢 *本社勤務:*\n${officeUsers}`,
-//         },
-//       },
-//       {
-//         type: 'section',
-//         text: {
-//           type: 'mrkdwn',
-//           text: `🏠 *在宅勤務:*\n${remoteUsers}`,
-//         },
-//       },
-//       {
-//         type: 'section',
-//         text: {
-//           type: 'mrkdwn',
-//           text: `💤 *休暇(回答無):*\n${vacationUsers}`,
-//         },
-//       },
-//     ],
-//   };
-
-//   // モーダルウィンドウを開く
-//   await client.views.open({
-//     trigger_id: payload.trigger_id,
-//     view: modalView,
-//   });
-//   console.log('▲ handleCreateList end');
-// }
+// 一覧ボタンクリック時
 async function handleCreateList(payload, modalView, ymd) {
   console.log('▼ handleCreateList start');
 
@@ -543,7 +465,7 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   console.log('▼ handleGoHome start');
 
   // 退勤状態のトグル
-  const { data: record, error } = await supabase.rpc('getuser_query', {
+  const { data: record } = await supabase.rpc('getuser_query', {
     userid: String(userId),
   });
   console.log(userId);
@@ -553,10 +475,7 @@ async function handleGoHome(payload, userId, ymd, modalView, responseText) {
   // .eq('user_id', userId)
   // .single();
 
-  if (error) console.log('ERROR:' + error);
-
   console.log('RPC result:', record);
-  console.error('RPC error:', error);
 
   // if (!record) {
   if (!record || record.length === 0 || !record[0].id) {
