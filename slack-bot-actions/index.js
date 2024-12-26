@@ -37,7 +37,7 @@ async function sendInteractiveMessage() {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `業務連絡スレッド ${formattedDate}\n最終出勤日です。頑張りましょう🫡✨`,
+            text: `業務連絡スレッド ${formattedDate}`,
           },
         },
         {
