@@ -220,7 +220,9 @@ async function handleCreateList(payload, modalView, ymd) {
   console.log('▼ handleCreateList start');
 
   // クエリを実行してデータを取得
-  const { data: records } = await supabase.rpc('custom_query');
+  const { data: records } = await supabase.rpc('custom_query', {
+    ymd_param: ymd,
+  });
 
   // データを分類
   const officeUsers = records.filter(
@@ -380,7 +382,10 @@ async function handleWorkStyleChange(
     await Promise.all(tasks);
     // DBから最新の人数を取得
     const { data: records, error: countError } = await supabase.rpc(
-      'count_query'
+      'count_query',
+      {
+        ymd_param: ymd,
+      }
     );
     if (countError) {
       throw countError;
@@ -517,7 +522,10 @@ async function handleGoHome(payload, userId, message, modalView, responseText) {
     await Promise.all(tasks);
     // DBから最新の人数を取得
     const { data: records, error: countError } = await supabase.rpc(
-      'count_query'
+      'count_query',
+      {
+        ymd_param: ymd,
+      }
     );
     if (countError) {
       throw countError;
