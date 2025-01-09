@@ -4,7 +4,7 @@ name: Slack Bot
 on:
   schedule:
     # 平日の日本時間AM7:00に実行 (UTCでは日曜日〜木曜日の22:00)
-     - cron: '0 22 * * 0-4'
+    #  - cron: '0 22 * * 0-4'
   workflow_dispatch: # 手動で実行できるようにする
 
 jobs:
